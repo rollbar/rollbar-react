@@ -1,0 +1,37 @@
+{
+  "name": "@rollbar/react",
+  "version": "0.5.0",
+  "description": "React features to enhance using Rollbar.js in React Applications",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rollbar/rollbar-react.git"
+  },
+  "keywords": [
+    "react",
+    "rollbar",
+    "error",
+    "monitoring"
+  ],
+  "author": "jeff.hoffer@rollbar.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rollbar/rollbar-react/issues"
+  },
+  "homepage": "https://github.com/rollbar/rollbar-react#readme",
+  "dependencies": {
+    "rollbar": "^2.21.1",
+    "tiny-invariant": "^1.1.0"
+  },
+  "devDependencies": {
+    "prop-types": "^15.7.2",
+    "react": "^16.14.0",
+    "rollup": "^2.44.0"
+  },
+  "peerDependencies": {
+    "react": "^16.0.0-0 || ^17.0.0-0"
+  }
+}
