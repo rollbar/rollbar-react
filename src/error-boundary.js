@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import invariant from 'tiny-invariant';
 import VALID_LEVELS, { LEVEL_ERROR } from './constants';
