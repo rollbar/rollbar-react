@@ -18,7 +18,9 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "rollup --config"
+    "build:clean": "rimraf dist lib bundles",
+    "build:files": "rollup --config",
+    "build": "npm run build:clean && npm run build:files"
   },
   "repository": {
     "type": "git",
@@ -62,9 +64,9 @@
     "prettier": "^2.2.1",
     "prop-types": "^15.7.2",
     "react": "^16.14.0",
+    "rimraf": "^3.0.2",
     "rollbar": "^2.21.1",
     "rollup": "^2.44.0",
-    "rollup-plugin-jsx": "^1.0.3",
     "rollup-plugin-peer-deps-external": "^2.2.4"
   },
   "peerDependencies": {
