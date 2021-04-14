@@ -2,9 +2,23 @@
   "name": "@rollbar/react",
   "version": "0.5.0",
   "description": "React features to enhance using Rollbar.js in React Applications",
-  "main": "dist/index.js",
+  "main": "lib",
+  "module": "dist",
+  "bundles": {
+    "browser": "bundles/browser.umd.js"
+  },
+  "sideEffects": false,
+  "directories": {
+    "lib": "dist"
+  },
+  "files": [
+    "dist",
+    "lib",
+    "bundles"
+  ],
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "rollup --config"
   },
   "repository": {
     "type": "git",
@@ -23,15 +37,39 @@
   },
   "homepage": "https://github.com/rollbar/rollbar-react#readme",
   "dependencies": {
-    "rollbar": "^2.21.1",
     "tiny-invariant": "^1.1.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.13.14",
+    "@babel/core": "^7.13.15",
+    "@babel/node": "^7.13.13",
+    "@babel/plugin-proposal-class-properties": "^7.13.0",
+    "@babel/plugin-syntax-class-properties": "^7.12.13",
+    "@babel/preset-env": "^7.13.15",
+    "@babel/preset-react": "^7.13.13",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-commonjs": "^18.0.0",
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "@testing-library/dom": "^7.30.3",
+    "@testing-library/jest-dom": "^5.11.10",
+    "@testing-library/react": "^11.2.6",
+    "@testing-library/react-hooks": "^5.1.1",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.6.3",
+    "eslint": "^7.24.0",
+    "eslint-config-prettier": "^8.2.0",
+    "jest": "^26.6.3",
+    "prettier": "^2.2.1",
     "prop-types": "^15.7.2",
     "react": "^16.14.0",
-    "rollup": "^2.44.0"
+    "rollbar": "^2.21.1",
+    "rollup": "^2.44.0",
+    "rollup-plugin-jsx": "^1.0.3",
+    "rollup-plugin-peer-deps-external": "^2.2.4"
   },
   "peerDependencies": {
-    "react": "^16.0.0-0 || ^17.0.0-0"
+    "react": "^16.0.0-0 || ^17.0.0-0",
+    "prop-types": "^15.7.2",
+    "rollbar": "^2.21.1"
   }
 }

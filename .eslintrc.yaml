@@ -1,0 +1,11 @@
+extends:
+  - prettier
+parser: babel-eslint
+plugins:
+  - babel
+rules:
+  quotes:
+    - error
+    - single
+    - avoidEscape: true
+      allowTemplateLiterals: true

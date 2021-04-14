@@ -1,4 +1,4 @@
-import [ useRollbar } from './use-rollbar';
+import { useRollbar } from './use-rollbar';
 
 export function useRollbarConfiguration(config) {
   const rollbar = useRollbar();

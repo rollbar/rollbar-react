@@ -2,6 +2,8 @@
 
 # compiled output
 /dist
+/lib
+/bundles
 /tmp
 /out-tsc
 
