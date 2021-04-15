@@ -7,6 +7,6 @@ export function useRollbarCaptureEvent(metadata, level = LEVEL_INFO) {
   const rollbar = useRollbar();
   useEffect(() => {
     rollbar.captureEvent(metadata, level);
-  }, [metadata]);
+  }, [metadata, level, rollbar]);
 }
 

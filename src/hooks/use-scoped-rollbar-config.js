@@ -7,7 +7,7 @@ import { Context, getRollbarFromContext, getRollbarConstructorFromContext } from
 
 export function useScopedConfiguration(config) {
   const ctx = useContext(Context);
-  const rollbar = getRollbarFromContext(ctx);
+  const base = getRollbarFromContext(ctx);
   const ctor = getRollbarConstructorFromContext(ctx);
   const rollbar = new ctor(base.options);
   rollbar.configure(config);

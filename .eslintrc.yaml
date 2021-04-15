@@ -1,8 +1,18 @@
 extends:
   - prettier
-parser: babel-eslint
+  - plugin:react-hooks/recommended
+  - plugin:jest-dom/recommended
+parser: "@babel/eslint-parser"
 plugins:
-  - babel
+  - "@babel"
+  - react-hooks
+  - testing-library
+overrides:
+  - files:
+      - "**/__tests__/**/*.[jt]s?(x)"
+      - "**/?(*.)+(spec|test).[jt]s?(x)"
+    extends:
+      - "plugin:testing-library/react"
 rules:
   quotes:
     - error
