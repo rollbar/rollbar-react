@@ -1,7 +1,7 @@
 import Rollbar from 'rollbar';
 import invariant from 'tiny-invariant';
 
-export function historyContext(rollbar, { formatter, filter }) {
+export function historyContext(rollbar, { formatter, filter } = {}) {
   invariant(rollbar instanceof Rollbar, 'historyContext must have an instance of Rollbar');
   invariant(formatter == null || typeof formatter === 'function', `formatter option must be a function, received ${typeof formatter} instead`);
   invariant(filter == null || typeof filter === 'function', `filter option must be a function, received ${typeof filter} instead`);
