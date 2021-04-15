@@ -22,6 +22,15 @@ After following those 2 steps, you will be ready.
 
 ### Install Rollbar React SDK
 
+We are hosting our `@rollbar` scoped packages in Github Packages. In order to use this you will need to follow the
+instructions for [Installing a Package from Github Packages](https://docs.github.com/en/packages/guides/configuring-npm-for-use-with-github-packages#installing-a-package)
+
+In the same directory as your `package.json` file, add a `.npmrc` file with the following:
+
+```
+@rollbar:registry=https://npm.pkg.github.com
+```
+
 To install with `npm`:
 
 ```shell
