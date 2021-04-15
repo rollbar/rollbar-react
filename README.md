@@ -127,6 +127,102 @@ export function App(props) {
 
 ### `ErrorBoundary` Component
 
+Rollbar's React SDK provides a new `ErrorBoundary` component which implements the interface for React's [Error Boundaries]
+introduced in React 16.
+
+The `ErrorBoundary` is used to wrap any tree or subtree in your React App to catch React Errors and log them to Rollbar
+automatically.
+
+The `ErrorBoundary` relies on the [`Provider`](#provider-component) above for the instance of Rollbar, so it will utilize
+whatever configuration has been provided.
+
+#### Simple Usage
+
+You can add an `ErrorBoundary` component to the top of your tree right after the `Provider` with no additional props
+and it will just work:
+
+```javascript
+import React from 'react';
+import { Provider, ErrorBoundary } from '@rollbar/react';
+
+// same configuration you would create for the Rollbar.js SDK
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  environment: 'production',
+};
+
+export function App(props) {
+  return (
+    <Provider config={rollbarConfig}>
+      <ErrorBoundary>
+        …
+      </ErrorBoundary>
+    </Provider>
+  );
+}
+```
+
+#### Pass `prop`s to control behavior
+
+The `ErrorBoundary` provides several `prop`s that allow customizing the behavior of how it will report errors to
+[Rollbar].
+
+These `prop`s take either a value or a function that will be invoked with the `error` and `info` from the [Error Boundaries]
+API's `componentDidCatch` method (i.e. signature is `(error, info)`).
+
+```javascript
+import React from 'react';
+import { Provider, ErrorBoundary, LEVEL_WARN } from '@rollbar/react';
+
+// same configuration you would create for the Rollbar.js SDK
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  environment: 'production',
+};
+
+export function App(props) {
+  return (
+    <Provider config={rollbarConfig}>
+      <ErrorBoundary level={LEVEL_WARN} errorMessage="Error in React render" extra={(error, info) => info.componentStack.includes('Experimental') ? { experiment: true } : {} }>
+        …
+      </ErrorBoundary>
+    </Provider>
+  );
+}
+```
+
+#### Pass a Fallback UI
+
+You may also include a Fallback UI to render when the error occurs so that the User does not experience a broken/blank
+UI caused during the render cycle of React.
+
+Like the other `prop`s it can accept a value that is a React Component or a function that returns a React Component with
+the same signature `(error, info)`.
+
+```javascript
+import React from 'react';
+import { Provider, ErrorBoundary, LEVEL_WARN } from '@rollbar/react';
+
+// same configuration you would create for the Rollbar.js SDK
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  environment: 'production',
+};
+
+const ErrorDisplay = ({ error, resetError }) => ( // <-- props passed to fallbackUI component
+  <div>…</div>
+);
+
+export function App(props) {
+  return (
+    <Provider config={rollbarConfig}>
+      <ErrorBoundary level={LEVEL_WARN} fallbackUI={ErrorDisplay}>
+        …
+      </ErrorBoundary>
+    </Provider>
+  );
+}
+```
 
 ### `RollbarContext` Component
 
@@ -147,8 +243,10 @@ export function App(props) {
 
 
 
+[Rollbar]: https://rollbar.com
+[Rollbar Docs]: https://docs.rollbar.com
 [Rollbar.js]: https://github.com/rollbar/rollbar.js
 [Rollbar.js Setup Instructions]: https://github.com/rollbar/rollbar.js/#setup-instructions
-[Rollbar Docs]: https://docs.rollbar.com
-[React Context]: https://reactjs.org/docs/context.html
 [React Native SDK]: https://github.com/rollbar/rollbar-react-native
+[React Context]: https://reactjs.org/docs/context.html
+[Error Boundaries]: https://reactjs.org/docs/error-boundaries.html
