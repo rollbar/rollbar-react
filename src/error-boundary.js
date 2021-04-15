@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import invariant from 'tiny-invariant';
-import VALID_LEVELS, { LEVEL_ERROR } from './constants';
+import { LEVEL_ERROR } from './constants';
 import { Context, getRollbarFromContext } from './provider';
+import * as utils from './utils';
 
 const INITIAL_ERROR_STATE = { hasError: false, error: null };
 
@@ -23,7 +24,7 @@ export class ErrorBoundary extends Component {
 
   constructor(props) {
     super(props);
-    invariant(VALID_LEVELS.includes(props.level), `${props.level} is not a valid level setting for Rollbar`);
+    invariant(utils.isValidLevel(props.level), `${props.level} is not a valid level setting for Rollbar`);
     this.state = { ...INITIAL_ERROR_STATE };
   }
 

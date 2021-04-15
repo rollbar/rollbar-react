@@ -1,9 +1,10 @@
 import invariant from 'tiny-invariant';
-import VALID_LEVELS, { LEVEL_DEBUG, LEVEL_INFO, LEVEL_CRITICAL } from '../constants';
+import { LEVEL_INFO } from '../constants';
 import { useRollbar } from './use-rollbar';
+import { isValidLevel } from '../utils';
 
 export function useRollbarCaptureEvent(metadata, level = LEVEL_INFO) {
-  invariant(VALID_LEVELS[level] <= LEVEL_CRITICAL && VALID_LEVELS[level] >= LEVEL_DEBUG, '')
+  invariant(isValidLevel(level), `${level} is not a valid level setting for Rollbar`);
   const rollbar = useRollbar();
   useEffect(() => {
     rollbar.captureEvent(metadata, level);

@@ -4,13 +4,14 @@
 
 import { useEffect, useLayoutEffect } from 'react';
 import invariant from 'tiny-invariant';
-import VALID_LEVELS, { LEVEL_DEBUG, LEVEL_INFO, LEVEL_WARN, LEVEL_ERROR, LEVEL_CRITICAL } from '../constants';
+import { LEVEL_DEBUG, LEVEL_INFO, LEVEL_WARN, LEVEL_ERROR, LEVEL_CRITICAL } from '../constants';
 import { useRollbar } from './use-rollbar';
+import { isValidLevel } from '../utils';
 
 const LOG = 'log';
 
 function useRollbarNotify(type, isLayout, ...args) {
-  invariant(type === LOG || VALID_LEVELS[type] >= LEVEL_DEBUG && VALID_LEVELS[type] <= LEVEL_CRITICAL, `cannot notify rollbar using method '${type}'`);
+  invariant(type === LOG || isValidLevel(type), `cannot notify rollbar using method '${type}'`);
   const rollbar = useRollbar();
   (isLayout ? useLayoutEffect : useEffect)(() => {
     rollbar[type](...args);
