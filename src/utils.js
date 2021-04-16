@@ -14,5 +14,6 @@ export function wrapValue(val, defaultAs) {
 }
 
 export function isValidLevel(level) {
-  return VALID_LEVELS[level] >= constants.LEVEL_DEBUG && VALID_LEVELS[level] <= constants.LEVEL_CRITICAL;
+  return VALID_LEVELS[level] >= VALID_LEVELS[constants.LEVEL_DEBUG]
+    && VALID_LEVELS[level] <= VALID_LEVELS[constants.LEVEL_CRITICAL];
 }
