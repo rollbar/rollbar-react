@@ -16,6 +16,7 @@ next month.
   - [Prerequisites](#prerequisites)
   - [Install Rollbar SDK](#install-rollbar-sdk)
 - [Usage and Reference](#usage-and-reference)
+  - [Simplest Usage Possible](#simplest-usage-possible)
 - [Components](#components)
   - [`Provider` Component](#provider-component)
   - [`ErrorBoundary` Component](#errorboundary-component)
@@ -39,7 +40,7 @@ After following those 2 steps, you will be ready.
 ### Install Rollbar React SDK
 
 We are hosting our `@rollbar` scoped packages in Github Packages. In order to use this you will need to follow the
-instructions for [Installing a Package from Github Packages](https://docs.github.com/en/packages/guides/configuring-npm-for-use-with-github-packages#installing-a-package)
+instructions for [Installing a Package from Github Packages][1]
 
 In the same directory as your `package.json` file, add a `.npmrc` file with the following:
 
@@ -59,12 +60,61 @@ To install with `yarn`:
 yarn add @rollbar/react
 ```
 
+To install by adding to `package.json` (as suggested by [Github Packages docs][1]), add the following to your project's
+`package.json` file:
+
+```json
+  …
+  "dependencies": {
+    "@rollbar/react": "^0.7.0",
+    …
+  }
+  …
+```
+
+then run either using `npm` or `yarn` (or other package manager):
+
+```shell
+npm install
+# OR
+yarn install
+```
+
 ## Usage and Reference
 
 The React SDK is very new and has not been given the full documentation treatment we expect to get from [Rollbar Docs],
 but that will be coming shortly and a direct link will be put here for your reference.
 
 In the meantime, the basic usage reference is available below.
+
+### Simplest Usage Possible
+
+To get you started quickly, here is an example that will get you started right away by providing the easiest and simplest
+usage possible:
+
+```javascript
+import React from 'react';
+import { Provider, ErrorBoundary } from '@rollbar/react'; // <-- Provider imports 'rollbar' for us
+
+// same configuration you would create for the Rollbar.js SDK
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  environment: 'production',
+};
+
+export default function App() {
+  return (
+    {/* Provider instantiates Rollbar client instance handling any uncaught errors or unhandled promises in the browser */}
+    <Provider config={rollbarConfig}>
+      {/* ErrorBoundary catches all React errors in the tree below and logs them to Rollbar */}
+      <ErrorBoundary>
+        // all other app providers and components - Rollbar will just work
+        …
+      </ErrorBoundary>
+    </Provider>
+  );
+};
+```
 
 ## Components
 
@@ -162,12 +212,12 @@ introduced in React 16.
 The `ErrorBoundary` is used to wrap any tree or subtree in your React App to catch React Errors and log them to Rollbar
 automatically.
 
-The `ErrorBoundary` relies on the [`Provider`](#provider-component) above for the instance of Rollbar, so it will utilize
+The `ErrorBoundary` relies on the [`Provider`] above for the instance of Rollbar, so it will utilize
 whatever configuration has been provided.
 
 #### Simple Usage
 
-You can add an `ErrorBoundary` component to the top of your tree right after the `Provider` with no additional props
+You can add an `ErrorBoundary` component to the top of your tree right after the [`Provider`] with no additional props
 and it will just work:
 
 ```javascript
@@ -261,7 +311,7 @@ messages to [Rollbar].
 This works for your `ErrorBoundary` from above or any other log or message sent to [Rollbar] while the `RollbarContext`
 is mounted on the tree.
 
-Like `ErrorBoundary` above, `RollbarContext` relies on a `Provider` for an instance of a [Rollbar.js] client.
+Like `ErrorBoundary` above, `RollbarContext` relies on a [`Provider`] for an instance of a [Rollbar.js] client.
 
 #### Basic Usage
 
@@ -337,10 +387,6 @@ export default function About(props) {
   )
 }
 ```
-
-#### Controlling when the context is set
-
-- `onRender` (optional) is any value that will be treated as a `Boolean` (truthy or falsey)
 
 ## Functions
 
@@ -425,17 +471,172 @@ const unlisten = history.listen(historyListener);
 
 ## Hooks
 
+The following hooks are available as named imports from `@rollbar/react` for use in [Functional Components] making use of the
+[React Hooks API] introduced in React 16.8.
+
+### Reliance on `Provider`
+
+All of these hooks below require there to be a [`Provider`] in the React Tree as an ancestor to the component using the hook.
+
 ### `useRollbar` hook
 
+To consume the [Rollbar.js] instance directly from the [`Provider`] in your React Tree and make use of the client API within
+your [Functional Component], use the `useRollbar` hook which will return the instance from the currently scoped [React Context].
+
+Here is a basic example:
+
+```javascript
+import { useRollbar } from '@rollbar/react';
+
+function ContactDetails({ contactId }) {
+  const rollbar = useRollbar(); // <-- must have parent Provider
+  const [contact, setContact] = useState();
+
+  useEffect(async () => {
+    try {
+      const { data } = await getContactFromApi(contactId);
+      setContact(data.contact);
+    } catch (error) {
+      rollbar.error('Error fetching contact', error, { contactId });
+    }
+  }, [contactId]);
+
+  return (
+    <div>
+      …
+    </div>
+  );
+}
+```
 
 ### `useRollbarContext` hook
 
+As an alternative to the [`RollbarContext`] component, you can use the `useRollbarContext` hook in your [Functional Component]
+to set the `context` in the [Rollbar.js] client provided by the [`Provider`] above in the React Tree.
+
+Here's an example of using it in several components:
+
+```javascript
+// src/pages/HomePage.js
+import { useRollbarContext } from '@rollbar/react';
+
+function HomePage(props) {
+  useRollbarContext('home#index');
+
+  return (
+    <div>
+      …
+    </div>
+  );
+}
+
+// src/pages/UsersPage.js
+import { useRollbarContext } from '@rollbar/react';
+import UserTable from '../components/users/UserTable';
+
+function UsersPage(props) {
+  useRollbarContext('users#list');
+
+  return (
+    <UserTable data={props.users} />
+  );
+}
+
+// src/pages/UserDetailsPage.js
+import { useRollbarContext } from '@rollbar/react';
+import UserDetails from '../components/users/UserDetails';
+
+function UserDetailsPage(props) {
+  useRollbarContext('users#details');
+
+  return (
+    <UserDetails user={props.user} />
+  );
+}
+```
 
 ### `useRollbarPerson` hook
 
+It's very usefull in [Rollbar] to log the identity of a person or user using your App for 2 major reasons:
+
+1. It allows you to know exactly who has been affected by an item or error in your App
+2. It allows [Rollbar] to tell you the impact a given item or error is having on your users
+
+To make it convenient and easy to set the identity of a person in your React App, the `@rollbar/react` package
+has the `userRollbarPerson` hook.
+
+To use it, simply pass an `Object` that has keys and values used to identify an individual user of your App,
+and for any future events or messages logged to [Rollbar] will include that person data attached to the log.
+
+Here is a simple example of using it once the current user has been determined:
+
+```javascript
+import { useState } from 'react';
+import { useRollbarPerson } from '@rollbar/react';
+import LoggedInHome  from './LoggedInHome';
+import LoggedOutHome from './LoggedOutHome';
+
+function Home() {
+  const [currentUser, setCurrentUser] = useState();
+
+  useEffect(async () => {
+    const user = await Auth.getCurrentUser();
+    if (user) {
+      useRollbarPerson(user);
+    }
+    setCurrentUser(user);
+  });
+
+  if (currentUser != null) {
+    return <LoggedInHome />;
+  }
+
+  return <LoggedOutHome />;
+}
+```
 
 ### `useRollbarCaptureEvent` hook
 
+[Rollbar.js] already provides automated [Telemetry] with the default configuration `autoInstrument: true` in the client
+which will capture useful telemetry events and data for you.
+
+To provide more breadcrumbs useful for identifying the cause of an item or error, you can add your own capture events
+that will be included in the [Telemetry] of an item in [Rollbar] with the `useRollbarCaptureEvent` hook.
+
+The `useRollbarCaptureEvent` hook is designed to capture a new event in your [Functional Component] any time the
+`metadata` or `level` you provide to the hook changes. On rerenders, no event is captured if there is not a change
+to the references provided to those 2 arguments (utilizing the `dependencies` array arg underneath within the call to
+the built-in React `useEffect` hook).
+
+Here is an example of using `useRollbarCaptureEvent` in the render cycle of a [Functional Component] to send a telemetry
+event related to the data that will be rendered in the component
+
+```javascript
+import { useEffect, useState } from 'react';
+import { userRollbar, useRollbarCaptureEvent, LEVEL_INFO } from '@rollbar/react';
+
+function BookDetails({ bookId }) {
+  const rollbar = useRollbar(); // <-- must have parent Provider
+  const [book, setBook] = useState();
+
+  useEffect(async () => {
+    try {
+      const { data } = await getBook(bookId);
+      setBook(data.book);
+    } catch (error) {
+      rollbar.error('Error fetching book', error, { bookId }); // <-- use rollbar to log errors as normal
+    }
+  }, [bookId]);
+
+  useRollbarCaptureEvent(book, LEVEL_INFO); // <-- only fires when book changes
+
+  return (
+    <div>
+      …
+    </div>
+  )
+}
+```
 
 
 [Rollbar]: https://rollbar.com
@@ -443,8 +644,15 @@ const unlisten = history.listen(historyListener);
 [Rollbar.js]: https://github.com/rollbar/rollbar.js
 [Rollbar.js Setup Instructions]: https://github.com/rollbar/rollbar.js/#setup-instructions
 [React Native SDK]: https://github.com/rollbar/rollbar-react-native
+[Telemetry]: https://docs.rollbar.com/docs/rollbarjs-telemetry
+[`Provider`]: #provider-component
+[`ErrorBoundary`]: #errorboundary-component
+[`RollbarContext`]: #rollbarcontext-component
+[Functional Components]: https://reactjs.org/docs/components-and-props.html#function-and-class-components
 [React Context]: https://reactjs.org/docs/context.html
 [Error Boundaries]: https://reactjs.org/docs/error-boundaries.html
+[React Hooks API]: https://reactjs.org/docs/hooks-intro.html
 [history]: https://www.npmjs.com/package/history
 [history.location]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#location
 [history.action]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#action
+[1]: https://docs.github.com/en/packages/guides/configuring-npm-for-use-with-github-packages#installing-a-package
