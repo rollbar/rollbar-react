@@ -12,6 +12,22 @@ It is currently in a public Beta release right now as we push towards a 1.0 rele
 we want to provide full capability for using React SDK in your production apps. We expect a 1.0 release to come in the
 next month.
 
+- [Setup Instructions](#setup-instructions)
+  - [Prerequisites](#prerequisites)
+  - [Install Rollbar SDK](#install-rollbar-sdk)
+- [Usage and Reference](#usage-and-reference)
+- [Components](#components)
+  - [`Provider` Component](#provider-component)
+  - [`ErrorBoundary` Component](#errorboundary-component)
+  - [`RollbarContext` Component](#rollbarcontext-component)
+- [Functions](#functions)
+  - [`historyContext`](#historycontext)
+- [Hooks](#hooks)
+  - [`useRollbar` hook](#userollbar-hook)
+  - [`useRollbarContext` hook](#userollbarcontext-hook)
+  - [`useRollbarPerson` hook](#userollbarperson-hook)
+  - [`useRollbarCaptureEvent` hook](#userollbarcaptureevent-hook)
+
 ## Setup Instructions
 
 ### Prerequisites
@@ -49,6 +65,10 @@ The React SDK is very new and has not been given the full documentation treatmen
 but that will be coming shortly and a direct link will be put here for your reference.
 
 In the meantime, the basic usage reference is available below.
+
+## Components
+
+The following components are available as named imports from `@rollbar/react`.
 
 ### `Provider` Component
 
@@ -235,9 +255,175 @@ export function App(props) {
 
 ### `RollbarContext` Component
 
+Use the `RollbarContext` component to declaratively set the `context` value used by [Rollbar.js] when it's sending any
+messages to [Rollbar].
+
+This works for your `ErrorBoundary` from above or any other log or message sent to [Rollbar] while the `RollbarContext`
+is mounted on the tree.
+
+Like `ErrorBoundary` above, `RollbarContext` relies on a `Provider` for an instance of a [Rollbar.js] client.
+
+#### Basic Usage
+
+To use the `RollbarContext` you must provide the `context` prop, a `String` that is used to set the context used by
+[Rollbar.js] to the value while mounted.
+
+```javascript
+import React from 'react';
+import { RollbarContext } from '@rollbar/react';
+
+function HomePage() {
+  return (
+    <RollbarContext context="home">
+      …
+    </RollbarContext>
+  )
+}
+```
+
+#### Using with React Router
+
+It's useful to set the `context` in [Rollbar] associated with areas of your application. On the server it's usually
+set when a specific page is requested. For SPAs like React Apps, using `RollbarContext` with your Router is one way
+to achieve the same result.
+
+Here is an example of using `RollbarContext` with [React Router] if you have a top level set of routes:
+
+```javascript
+import React from 'react';
+import { Router, Switch, Route } from 'react-router-dom';
+import { RollbarContext } from '@rollbar/react';
+import { About, ContactDetails, ContactsList } from './pages';
+
+const Routes = () => (
+  <Router>
+    <Switch>
+      <Route path="/about">
+        <RollbarContext context="/about">
+          <About />
+        </RollbarContext>
+      </Route>
+      <Route path="/contacts/:id">
+        <RollbarContext context="contacts/details">
+          <ContactDetails />
+        </RollbarContext>
+      </Route>
+      <Route path="/contacts">
+        <RollbarContext context="contacts">
+          <ContactsList />
+        </RollbarContext>
+      </Route>
+    </Switch>
+  </Router>
+)
+
+export default Routes;
+```
+
+Here's another example of using `RollbarContext` within a component that manages its own route:
+
+```javascript
+import React from 'react';
+import { Route } from 'react-router-dom';
+import { RollbarContext } from '@rollbar/react';
+
+export default function About(props) {
+  return (
+    <Route path="/about">
+      <RollbarContext context="/about">
+        …
+      </RollbarContext>
+    </Route>
+  )
+}
+```
+
+#### Controlling when the context is set
+
+- `onRender` (optional) is any value that will be treated as a `Boolean` (truthy or falsey)
+
+## Functions
+
+The following functions are available as named imports from `@rollbar/react`.
 
 ### `historyContext` to create `history.listener`
 
+A lot of SPAs and React Apps will use the [history] package to handle browser history. The
+`historyContext` function is a helper that creates a valid listener function to receive
+history changes and use those to change the [Rollbar.js] context.
+
+`historyContext` is a factory function used to create a proper `history.listen` callback
+that will work for v4 and v5 of the [history] package.
+
+#### Basic `historyContext` usage
+
+The `historyContext` factory function requires an instance of [Rollbar.js] to wrap in order
+to create the listener callback function.
+
+By default, if no options (see below) are provided, all history updates will update the `context` for [Rollbar] using the
+`location.pathname` as the value.
+
+```javascript
+import Rollbar from 'rollbar';
+import { createBrowserHistory } from 'history';
+import { Provider } from '@rollbar/react';
+
+// same configuration you would create for the Rollbar.js SDK
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  environment: 'production',
+};
+
+const rollbar = new Rollbar(rollbarConfig);
+
+const history = createBrowserHistory();
+
+history.listen(historyContext(rollbar));
+```
+
+#### Controlling `historyContext` behavior with options
+
+The `historyContext` factory function accepts `options` as a 2nd argument that allow you to control the behavior
+of how and when the `context` will be set for the [Rollbar.js] client.
+
+Use the `formatter` option to provide a function that will receive the `history` change event and return a `String`
+that you would like to be set as the `context` for [Rollbar].
+
+The signature is `formatter(location, action): String` where `location` is [history.location] and `action` is [history.action].
+
+The other option is `filter` which you can provide to tell the `historyContext` listener you create to control
+which history updates will change the `context` for [Rollbar]. All truthy values will tell the listener to make
+the change. Any falsy values will skip the update.
+
+The signature is `filter(location, action): Boolean` where `location` is [history.location] and `action` is [history.action].
+
+Here's an example of using both:
+
+```javascript
+import Rollbar from 'rollbar';
+import { createBrowserHistory } from 'history';
+import { Provider } from '@rollbar/react';
+
+// same configuration you would create for the Rollbar.js SDK
+const rollbarConfig = {
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
+  environment: 'production',
+};
+
+const rollbar = new Rollbar(rollbarConfig);
+
+const ROUTE_PARAMS_RE = /\/\d+/g;
+
+const historyListener = historyContext(rollbar, {
+  // optional: default uses location.pathname
+  formatter: (location, action) => location.pathname.replace(ROUTE_PARAMS_RE, ''),
+  // optional: true return sets Rollbar context
+  filter: (location, action) => !location.pathname.includes('admin'),
+});
+const unlisten = history.listen(historyListener);
+```
+
+## Hooks
 
 ### `useRollbar` hook
 
@@ -259,3 +445,6 @@ export function App(props) {
 [React Native SDK]: https://github.com/rollbar/rollbar-react-native
 [React Context]: https://reactjs.org/docs/context.html
 [Error Boundaries]: https://reactjs.org/docs/error-boundaries.html
+[history]: https://www.npmjs.com/package/history
+[history.location]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#location
+[history.action]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#action
