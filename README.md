@@ -46,6 +46,7 @@ In the same directory as your `package.json` file, add a `.npmrc` file with the 
 
 ```
 @rollbar:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken="PUBLIC_ACCESS_TOKEN"
 ```
 
 To install with `npm`:
@@ -613,10 +614,10 @@ event related to the data that will be rendered in the component
 
 ```javascript
 import { useEffect, useState } from 'react';
-import { userRollbar, useRollbarCaptureEvent, LEVEL_INFO } from '@rollbar/react';
+import { useRollbar, useRollbarCaptureEvent, LEVEL_INFO } from '@rollbar/react';
 
 function BookDetails({ bookId }) {
-  const rollbar = useRollbar(); // <-- must have parent Provider
+  const rollbar = useRollbar(); // <-- must have ancestor Provider, same with useRollbarCaptureEvent
   const [book, setBook] = useState();
 
   useEffect(async () => {
