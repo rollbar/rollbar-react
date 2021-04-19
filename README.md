@@ -39,16 +39,6 @@ After following those 2 steps, you will be ready.
 
 ### Install Rollbar React SDK
 
-We are hosting our `@rollbar` scoped packages in Github Packages. In order to use this you will need to follow the
-instructions for [Installing a Package from Github Packages][1]
-
-In the same directory as your `package.json` file, add a `.npmrc` file with the following:
-
-```
-@rollbar:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken="PUBLIC_ACCESS_TOKEN"
-```
-
 To install with `npm`:
 
 ```shell
@@ -61,13 +51,13 @@ To install with `yarn`:
 yarn add @rollbar/react
 ```
 
-To install by adding to `package.json` (as suggested by [Github Packages docs][1]), add the following to your project's
+To install by adding to `package.json`, add the following to your project's
 `package.json` file:
 
 ```json
   …
   "dependencies": {
-    "@rollbar/react": "^0.7.0",
+    "@rollbar/react": "^0.8.0",
     …
   }
   …
