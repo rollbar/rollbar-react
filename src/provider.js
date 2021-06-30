@@ -25,8 +25,26 @@ export function getRollbarConstructorFromContext(context) {
 export class Provider extends Component {
   static propTypes = {
     Rollbar: PropTypes.func,
-    config: PropTypes.oneOfType([PropTypes.object, PropTypes.func]).isRequired,
-    instance: PropTypes.instanceOf(Rollbar),
+    config: (props, propName, componentName) => {
+      if (!props.config && !props.instance) {
+        return new Error(`One of the required props 'config' or 'instance' must be set for ${componentName}.`)
+      }
+      if (props.config) {
+        const configType = typeof props.config;
+        if (configType === 'function' || configType === 'object' && !Array.isArray(configType)) {
+          return;
+        }
+        return new Error(`${propName} must be either an Object or a Function`);
+      }
+    },
+    instance: (props, propName, componentName) => {
+      if (!props.config && !props.instance) {
+        return new Error(`One of the required props 'config' or 'instance' must be set for ${componentName}.`)
+      }
+      if (props.instance && !(props.instance instanceof Rollbar)) {
+        return new Error(`${propName} must be an instance of Rollbar`);
+      }
+    }
   }
 
   constructor(props) {
