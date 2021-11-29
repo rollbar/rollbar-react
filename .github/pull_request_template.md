@@ -1,16 +1,22 @@
 ## Description of the change
 
-> Description here
+> Please include a summary of the change and which issues are fixed.
+> Please also include relevant motivation and context.
 
 ## Type of change
 
 - [ ] Bug fix (non-breaking change that fixes an issue)
 - [ ] New feature (non-breaking change that adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Maintenance
+- [ ] New release
 
 ## Related issues
 
-> Fix [#1]()
+> Shortcut stories and GitHub issues (delete irrelevant)
+
+- Fix [SC-]
+- Fix #1
 
 ## Checklists
 
@@ -22,7 +28,7 @@
 
 ### Code review
 
-- [ ]  This pull request has a descriptive title and information useful to a reviewer. There may be a screenshot or screencast attached
-- [ ] "Ready for review" label attached to the PR and reviewers mentioned in a comment
-- [ ] Changes have been reviewed by at least one other engineer
+- [ ] This pull request has a descriptive title and information useful to a reviewer. There may be a screenshot or screencast attached
+- [ ] "Ready for review" label attached to the PR and reviewers assigned
 - [ ] Issue from task tracker has a link to this pull request
+- [ ] Changes have been reviewed by at least one other engineer
