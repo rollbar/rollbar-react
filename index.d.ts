@@ -33,7 +33,7 @@ export class RollbarContext extends Component<{
   context?: string;
 }> {}
 export function useRollbar(): Rollbar;
-export function useRollbarConfiguration(config: Rollbar.Configuration): Rollbar;
+export function useRollbarConfiguration(config: Rollbar.Configuration): void;
 export function useRollbarContext(ctx?: string, isLayout?: boolean): void;
 export function useRollbarPerson(person: any): void;
 export function useRollbarCaptureEvent(metadata: object, level?: LEVEL): void;
