@@ -6,7 +6,7 @@ export const LEVEL_INFO = "info";
 export const LEVEL_WARN = "warn";
 export const LEVEL_ERROR = "error";
 export const LEVEL_CRITICAL = "critical";
-type LEVEL =
+export type LEVEL =
   | typeof LEVEL_DEBUG
   | typeof LEVEL_INFO
   | typeof LEVEL_WARN
