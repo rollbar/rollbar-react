@@ -1,5 +1,5 @@
 import { Component, ReactNode } from "react";
-import Rollbar from "rollbar";
+import Rollbar, { Callback } from "rollbar";
 
 export const LEVEL_DEBUG = "debug";
 export const LEVEL_INFO = "info";
@@ -15,19 +15,26 @@ export type LEVEL =
 
 export interface ErrorBoundaryProps {
   children: ReactNode;
-  fallbackUI?: ReactNode
-  errorMessage?: string | (() => string)
-  extra?: Record<string | number, unknown> | (() => Record<string | number, unknown>)
-  level?: LEVEL | (() => LEVEL)
-  callback?: () => void
+  fallbackUI?: ReactNode;
+  errorMessage?: string | (() => string);
+  extra?:
+    | Record<string | number, unknown>
+    | (() => Record<string | number, unknown>);
+  level?: LEVEL | (() => LEVEL);
+  callback?: Callback<any>;
 }
 
 interface ErrorBoundaryState {
-  hasError: boolean
-  error: Error | undefined
+  hasError: boolean;
+  error: Error | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {}
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  resetError: () => void;
+}
 export class RollbarContext extends Component<{
   children: ReactNode;
   context?: string;
@@ -35,14 +42,20 @@ export class RollbarContext extends Component<{
 export function useRollbar(): Rollbar;
 export function useRollbarConfiguration(config: Rollbar.Configuration): void;
 export function useRollbarContext(ctx?: string, isLayout?: boolean): void;
-export function useRollbarPerson(person: any): void;
+export function useRollbarPerson(person: object): void;
 export function useRollbarCaptureEvent(metadata: object, level?: LEVEL): void;
-export function isValidLevel(): boolean;
+export function isValidLevel(level: LEVEL): boolean;
 
 export function historyContext(
   rollbar: Rollbar,
   args: {
-    formatter: (location: string, action: string) => void;
-    filter: (location: string, action: string) => void;
+    formatter: (location: string, action: string) => string;
+    filter: (location: string, action: string) => boolean;
   }
-): (v4Location: { action: string; filter: string }, v4action: string) => void;
+): (
+  v4Location: {
+    action: string;
+    filter: (location: string, action: string) => boolean;
+  },
+  v4action: string
+) => void;
