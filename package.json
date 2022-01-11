@@ -11,6 +11,7 @@
   "directories": {
     "lib": "dist"
   },
+  "types": "index.d.ts",
   "files": [
     "dist",
     "lib",
