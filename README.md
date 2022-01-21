@@ -266,8 +266,7 @@ export function App(props) {
 You may also include a Fallback UI to render when the error occurs so that the User does not experience a broken/blank
 UI caused during the render cycle of React.
 
-Like the other `prop`s it can accept a value that is a React Component or a function that returns a React Component with
-the same signature `(error, info)`.
+It can accept a value that is a React Component
 
 ```javascript
 import React from 'react';
@@ -280,7 +279,10 @@ const rollbarConfig = {
 };
 
 const ErrorDisplay = ({ error, resetError }) => ( // <-- props passed to fallbackUI component
-  <div>…</div>
+  <div>
+    <h1>A following error has occured:</h1>
+    <p>{error.toString()}</p>
+  </div>
 );
 
 export function App(props) {

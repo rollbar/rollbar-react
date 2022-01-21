@@ -4,15 +4,16 @@ import { Router, Switch, Route } from 'react-router-dom';
 import { Client } from 'rollbar-react-native';
 import { Provider, Context, ErrorBoundary, useRollbar, useRollbarCaptureEvent, LEVEL_INFO, useRollbarPerson, useContext, RollbarContext, historyContext } from '../src';
 
-const ErrorDisplay = ({ error, resetError }) => ( // <-- props passed to fallbackUI component
-  <div>…</div>
-);
-
-function displayForError(error, resetError) { // <-- args passed to fallbackUI function
+function ErrorDisplay({error, resetError}) { // <-- props passed to fallbackUI component
   if (error instanceof AggregateError) {
     return <AggregateDisplay error={error} />;
   }
-  return <ErrorDisplay error={error} onclick={resetError} />;
+  return (
+    <div>
+      <h1>Something went wrong.</h1>
+      {error && <p>{error.toString()}</p>}
+    </div>
+  );
 }
 
 const rollbarConfig = {
