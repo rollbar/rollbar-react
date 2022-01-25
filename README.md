@@ -42,13 +42,13 @@ After following those 2 steps, you will be ready.
 To install with `npm`:
 
 ```shell
-npm install @rollbar/react
+npm install @rollbar/react rollbar
 ```
 
 To install with `yarn`:
 
 ```shell
-yarn add @rollbar/react
+yarn add @rollbar/react rollbar
 ```
 
 To install by adding to `package.json`, add the following to your project's
@@ -58,6 +58,7 @@ To install by adding to `package.json`, add the following to your project's
   …
   "dependencies": {
     "@rollbar/react": "^0.8.0",
+    "rollbar": "^2.24.0",
     …
   }
   …
