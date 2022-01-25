@@ -569,13 +569,13 @@ import LoggedOutHome from './LoggedOutHome';
 
 function Home() {
   const [currentUser, setCurrentUser] = useState();
+  useRollbarPerson(currentUser);
 
-  useEffect(async () => {
-    const user = await Auth.getCurrentUser();
-    if (user) {
-      useRollbarPerson(user);
-    }
-    setCurrentUser(user);
+  useEffect(() => {
+    (async () => {
+      const user = await Auth.getCurrentUser();
+      setCurrentUser(user);
+    })()
   });
 
   if (currentUser != null) {
