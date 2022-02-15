@@ -42,13 +42,13 @@ export class RollbarContext extends Component<{
 
 export interface ProviderProps {
   Rollbar?: new (options: Configuration) => Rollbar;
-  config?: Configuration | (() => Configuation);
+  config?: Configuration | (() => Configuration);
   instance?: Rollbar;
 }
 
 interface ProviderState {
   rollbar: Rollbar;
-  options: Coniguration;
+  options: Configuration;
 }
 
 export class Provider extends Component<ProviderProps, ProviderState> {}
