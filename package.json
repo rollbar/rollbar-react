@@ -15,7 +15,8 @@
   "files": [
     "dist",
     "lib",
-    "bundles"
+    "bundles",
+    "index.d.ts"
   ],
   "scripts": {
     "test": "jest",
