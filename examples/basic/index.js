@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Rollbar from 'rollbar';
 import { Router, Switch, Route } from 'react-router-dom';
 import { Client } from 'rollbar-react-native';
-import { Provider, Context, ErrorBoundary, useRollbar, useRollbarCaptureEvent, LEVEL_INFO, useRollbarPerson, useContext, RollbarContext, historyContext } from '../src';
+import { Provider, Context, ErrorBoundary, useRollbar, useRollbarCaptureEvent, LEVEL_INFO, useRollbarPerson, useContext, RollbarContext, historyContext } from '../../src';
 
 function ErrorDisplay({error, resetError}) { // <-- props passed to fallbackUI component
   if (error instanceof AggregateError) {
