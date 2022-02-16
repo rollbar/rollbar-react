@@ -52,25 +52,16 @@ export class ErrorBoundary extends Component {
 
   render() {
     const { hasError, error } = this.state;
-    const { fallbackUI, children } = this.props;
+    const { fallbackUI: FallbackUI, children } = this.props;
 
     if (!hasError) {
       return children;
     }
 
-    if (!fallbackUI) {
+    if (!FallbackUI) {
       return null;
     }
 
-    if (React.isValidElement(fallbackUI)) {
-      return <fallbackUI error={error} resetError={this.resetError} />;
-    }
-
-    if (typeof fallbackUI === 'function') {
-      const fallbackComponent = fallbackUI(error, this.resetError);
-      return React.isValidElement(fallbackComponent) ? fallbackComponent : null;
-    }
-
-    return null;
+    return <FallbackUI error={error} resetError={this.resetError} />;
   }
 }
