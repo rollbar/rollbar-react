@@ -1,3 +1,12 @@
+# @rollbar/react and NextJS
+
+This example shows how to initialize and then use `rollbar` in your NextJS application. The relevant files are below:
+
+- [`_app.tsx`](./pages/_app.tsx) contains the initialization of the rollbar sdk.
+- [`index.tsx`](./pages/index.tsx) contains an example of sending an event with rollbar when a component is mounted.
+
+## Bootstrapped NextJS documentation
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started

@@ -3,7 +3,7 @@ import type { AppProps } from 'next/app'
 import { Provider, ErrorBoundary } from '@rollbar/react';
 
 const rollbarConfig = {
-  accessToken: 'e7318312f58b420fae9edd1669592723',
+  accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   captureUncaught: true,
   captureUnhandledRejections: true,
   payload: {
