@@ -17,3 +17,7 @@ export function isValidLevel(level) {
   return VALID_LEVELS[level] >= VALID_LEVELS[constants.LEVEL_DEBUG]
     && VALID_LEVELS[level] <= VALID_LEVELS[constants.LEVEL_CRITICAL];
 }
+
+export function isRollbarInstance(instance) {
+  return !!instance?.options?.accessToken;
+}

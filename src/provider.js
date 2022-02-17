@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Rollbar from 'rollbar';
 import invariant from 'tiny-invariant';
 import * as constants from './constants';
-import * as utils from './utils';
+import { isRollbarInstance } from './utils';
 
 export const Context = createContext();
 Context.displayName = 'Rollbar';
@@ -41,8 +41,8 @@ export class Provider extends Component {
       if (!props.config && !props.instance) {
         return new Error(`One of the required props 'config' or 'instance' must be set for ${componentName}.`)
       }
-      if (props.instance && !(props.instance instanceof Rollbar)) {
-        return new Error(`${propName} must be an instance of Rollbar`);
+      if (props.instance && !isRollbarInstance(props.instance)) {
+        return new Error(`${propName} must be a configured instance of Rollbar`);
       }
     }
   }
@@ -50,7 +50,10 @@ export class Provider extends Component {
   constructor(props) {
     super(props);
     const { config, Rollbar: ctor = Rollbar, instance } = this.props;
-    invariant(!instance || instance instanceof Rollbar, 'providing `instance` must be of type Rollbar');
+    invariant(
+      !instance || isRollbarInstance(instance),
+      '`instance` must be a configured instance of Rollbar'
+    );
     const options = typeof config === 'function' ? config() : config;
     const rollbar = instance || new ctor(options);
     // TODO: use isUncaught to filter if this is 2nd Provider added
