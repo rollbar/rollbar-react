@@ -1,5 +1,6 @@
-import { Component, ReactNode } from "react";
+import { Component, Context as ReactContext, ReactNode } from "react";
 import Rollbar, { Callback, Configuration } from "rollbar";
+import { RollbarInstance, BaseOptions, RollbarCtor } from "./src/provider";
 
 export const LEVEL_DEBUG = "debug";
 export const LEVEL_INFO = "info";
@@ -53,6 +54,15 @@ interface ProviderState {
 
 export class Provider extends Component<ProviderProps, ProviderState> {}
 
+interface ContextInterface {
+  [RollbarInstance]: Rollbar;
+  [BaseOptions]: Configuration;
+  [RollbarCtor]: new (options: Configuration) => Rollbar;
+}
+
+export const Context: ReactContext<ContextInterface>;
+
+export function getRollbarFromContext(context: Context): Rollbar;
 export function useRollbar(): Rollbar;
 export function useRollbarConfiguration(config: Rollbar.Configuration): void;
 export function useRollbarContext(ctx?: string, isLayout?: boolean): void;

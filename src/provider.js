@@ -8,9 +8,9 @@ import * as utils from './utils';
 export const Context = createContext();
 Context.displayName = 'Rollbar';
 
-const RollbarInstance = Symbol('RollbarInstance');
-const BaseOptions = Symbol('BaseOptions');
-const RollbarCtor = Symbol('RollbarCtor');
+export const RollbarInstance = Symbol('RollbarInstance');
+export const BaseOptions = Symbol('BaseOptions');
+export const RollbarCtor = Symbol('RollbarCtor');
 
 export function getRollbarFromContext(context) {
   const { [RollbarInstance]: rollbar } = context;
