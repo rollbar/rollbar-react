@@ -57,9 +57,9 @@
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-commonjs": "^18.0.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
-    "@testing-library/dom": "^7.30.3",
-    "@testing-library/jest-dom": "^5.11.10",
-    "@testing-library/react": "^11.2.6",
+    "@testing-library/dom": "^7.31.2",
+    "@testing-library/jest-dom": "^5.16.2",
+    "@testing-library/react": "^11.2.7",
     "@testing-library/react-hooks": "^5.1.1",
     "babel-jest": "^26.6.3",
     "eslint": "^7.24.0",
@@ -72,6 +72,8 @@
     "prettier": "^2.2.1",
     "prop-types": "^15.7.2",
     "react": "^16.14.0",
+    "react-dom": "^17.0.2",
+    "regenerator-runtime": "^0.13.9",
     "rimraf": "^3.0.2",
     "rollbar": "^2.21.1",
     "rollup": "^2.44.0",
@@ -81,5 +83,13 @@
     "react": "^16.0.0-0 || ^17.0.0-0",
     "prop-types": "^15.7.2",
     "rollbar": "^2.21.1"
+  },
+  "jest": {
+    "roots": [
+      "src/tests"
+    ],
+    "setupFilesAfterEnv": [
+      "./src/tests/jest-setup.js"
+    ]
   }
 }
