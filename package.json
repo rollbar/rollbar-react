@@ -1,6 +1,6 @@
 {
   "name": "@rollbar/react",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "React features to enhance using Rollbar.js in React Applications",
   "main": "lib",
   "module": "dist",
