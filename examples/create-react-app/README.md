@@ -1,3 +1,12 @@
+# Rollbar - create-react-app example
+
+This project shows an example of how to add rollbar to your create-react-app bootstrapped application.
+It requires a `.env` file to be set with a `REACT_APP_PUBLIC_ROLLBAR_TOKEN` variable.
+
+The important files are `src/index.js` and `src/App.js`.
+
+---
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
