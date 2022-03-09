@@ -10,13 +10,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   globals: {
     'ts-jest': {
-      tsconfig: {
-        esModuleInterop: true,
-        jsx: 'react-jsx',
-        module: 'commonjs',
-        strict: true,
-        target: 'esnext',
-      }
+      tsconfig: './tsconfig.json'
     }
   }
 };
