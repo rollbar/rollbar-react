@@ -2,7 +2,6 @@ import React, { Component, createContext } from 'react';
 import PropTypes from 'prop-types';
 import Rollbar from 'rollbar';
 import invariant from 'tiny-invariant';
-import * as constants from './constants';
 import { isRollbarInstance } from './utils';
 
 export const Context = createContext();
@@ -44,7 +43,8 @@ export class Provider extends Component {
       if (props.instance && !isRollbarInstance(props.instance)) {
         return new Error(`${propName} must be a configured instance of Rollbar`);
       }
-    }
+    },
+    children: PropTypes.node
   }
 
   constructor(props) {

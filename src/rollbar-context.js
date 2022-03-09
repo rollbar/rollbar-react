@@ -1,13 +1,12 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import PropTypes from 'prop-types';
-// import Rollbar from 'rollbar';
-import invariant from 'tiny-invariant';
 import { Context, getRollbarFromContext } from './provider';
 
 export class RollbarContext extends Component {
   static propTypes = {
     context: PropTypes.string.isRequired,
     onRender: PropTypes.bool,
+    children: PropTypes.node,
   }
 
   static defaultProps = {
@@ -22,8 +21,6 @@ export class RollbarContext extends Component {
     super(props);
     this.state = { previousContext: null };
   }
-
-  // static getDerivedStateFromProps() {}
 
   changeContext = (storePrevious = true) => {
     const rollbar = getRollbarFromContext(this.context);

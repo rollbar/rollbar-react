@@ -1,7 +1,6 @@
 import invariant from 'tiny-invariant';
 import { useEffect, useLayoutEffect } from 'react';
 import { useRollbar } from './use-rollbar';
-import { useRollbarConfiguration } from './use-rollbar-config';
 
 // Simple version does its job
 // export function useRollbarContext(context) {

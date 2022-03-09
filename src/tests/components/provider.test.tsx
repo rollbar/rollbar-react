@@ -1,13 +1,13 @@
 import React from 'react';
 import { waitFor, screen } from '@testing-library/react';
-import Rollbar from 'rollbar';
-import { useRollbar } from '../../hooks/use-rollbar';
+import Rollbar = require('rollbar');
+import { useRollbar } from '../rollbar-react';
 import { renderWithProviderProps } from '../utils/provider-util';
 
 describe('Provider', () => {
   const accessToken = 'POST_CLIENT_ITEM_TOKEN';
 
-  const config = {
+  const config: Rollbar.Configuration = {
     accessToken: accessToken,
     captureUncaught: true
   };
@@ -25,12 +25,11 @@ describe('Provider', () => {
     );
   }
 
-  const instance = new Rollbar(config);
+  const instance: Rollbar = new Rollbar(config);
 
   it('should provide a Rollbar instance, given a config', async () => {
     renderWithProviderProps(
-      <TestComponent />,
-      { providerProps: { config: config }}
+      <TestComponent />, {}, { config: config }
     );
 
     await waitFor(() => {
@@ -42,8 +41,7 @@ describe('Provider', () => {
 
   it('should provide a Rollbar instance, given a constructor', async () => {
     renderWithProviderProps(
-      <TestComponent />,
-      { providerProps: { Rollbar: Rollbar, config: config }}
+      <TestComponent />, {}, { Rollbar: Rollbar, config: config }
     );
 
     await waitFor(() => {
@@ -55,8 +53,7 @@ describe('Provider', () => {
 
   it('should provide a Rollbar instance, given the instance', async () => {
     renderWithProviderProps(
-      <TestComponent />,
-      { providerProps: { instance: instance }}
+      <TestComponent />, {}, { instance: instance }
     );
 
     await waitFor(() => {
