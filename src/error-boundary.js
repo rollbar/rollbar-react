@@ -16,6 +16,7 @@ export class ErrorBoundary extends Component {
     extra: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
     level: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     callback: PropTypes.func,
+    children: PropTypes.node,
   }
 
   static defaultProps = {

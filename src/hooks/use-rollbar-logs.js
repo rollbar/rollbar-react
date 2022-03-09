@@ -39,5 +39,5 @@ export function useRollbarError(isLayout, ...args) {
 }
 
 export function useRollbarCritical(isLayout, ...args) {
-  useRollbarNotify(LEVEL_ERROR, isLayout, ...args);
+  useRollbarNotify(LEVEL_CRITICAL, isLayout, ...args);
 }

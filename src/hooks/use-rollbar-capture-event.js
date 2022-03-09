@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import invariant from 'tiny-invariant';
 import { LEVEL_INFO } from '../constants';
 import { useRollbar } from './use-rollbar';
@@ -10,4 +11,3 @@ export function useRollbarCaptureEvent(metadata, level = LEVEL_INFO) {
     rollbar.captureEvent(metadata, level);
   }, [metadata, level, rollbar]);
 }
-

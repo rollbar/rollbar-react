@@ -3,13 +3,14 @@
 
 // PURPOSE provide a wrapping around Rollbar configuration for a subtree
 
-import React, { Component } from 'react';
+import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Context, getRollbarFromContext } from './provider';
 
 export class RollbarConfiguration extends Component {
   static propTypes = {
     options: PropTypes.object.isRequired,
+    children: PropTypes.node,
   }
 
   static contextType = Context;
