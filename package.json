@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "lint": "eslint src",
+    "lint": "eslint src babel.config.js",
     "build:clean": "rimraf dist lib bundles",
     "build:files": "rollup --config",
     "build": "npm run build:clean && npm run build:files"
