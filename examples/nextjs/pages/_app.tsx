@@ -24,7 +24,13 @@ const rollbarConfig = {
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Provider config={rollbarConfig}>
-      <ErrorBoundary>
+      <ErrorBoundary
+        level="critical"
+        errorMessage="example error boundary message"
+        fallbackUI={() => <p style={{ color: 'red' }}>Oops, there was an error.</p>}
+        extra={{ more: 'data' }}
+        callback={() => console.log('an exception was sent to rollbar')}
+      >
         <Component {...pageProps} />
       </ErrorBoundary>
     </Provider>
