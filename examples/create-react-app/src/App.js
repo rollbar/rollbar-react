@@ -32,8 +32,11 @@ function App() {
   return (
     <RollbarProvider config={rollbarConfig}>
       <ErrorBoundary
-        errorMessage={"example error boundary message"}
+        level="critical"
+        errorMessage="example error boundary message"
         fallbackUI={() => <p style={{ color: 'red' }}>Oops, there was an error.</p>}
+        extra={{ more: 'data' }}
+        callback={() => console.log('an exception was sent to rollbar')}
       >
         <nav>
           <ul>
