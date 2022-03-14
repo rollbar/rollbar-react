@@ -11,7 +11,7 @@ export class ErrorBoundary extends Component {
   static contextType = Context;
 
   static propTypes = {
-    fallbackUI: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
+    fallbackUI: PropTypes.func,
     errorMessage: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     extra: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
     level: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
