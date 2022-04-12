@@ -42,6 +42,7 @@ export class RollbarContext extends Component<{
 
 export interface ProviderProps {
   Rollbar?: new (options: Configuration) => Rollbar;
+  children: ReactNode;
   config?: Configuration | (() => Configuration);
   instance?: Rollbar;
 }
