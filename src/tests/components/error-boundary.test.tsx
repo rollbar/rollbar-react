@@ -59,4 +59,30 @@ describe('ErrorBoundary', () => {
       errorMessage, error, expect.objectContaining(extra), callback
     );
   });
+
+  describe('with extra prop as a fn', () => {
+    it('should send extra value to rollbar on error', () => {
+      const extraFn: ErrorBoundaryProps['extra'] = (error, errorInfo) => {
+        expect(error).toBeInstanceOf(Error)
+        expect(errorInfo).toHaveProperty('componentStack')
+        return extra;
+      };
+  
+      renderWithProviderProps(
+        <TestComponent
+          fallbackUI={Fallback}
+          errorMessage={errorMessage}
+          extra={extraFn}
+          level={level}
+          callback={callback}
+        />,
+        {},
+        {config: config}
+      );
+  
+      expect(rollbar.warn).toHaveBeenLastCalledWith(
+        errorMessage, error, expect.objectContaining(extra), callback
+      );
+    });
+  });
 });
