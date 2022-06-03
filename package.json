@@ -87,7 +87,7 @@
     "typescript": "^4.6.2"
   },
   "peerDependencies": {
-    "react": "^16.0.0-0 || ^17.0.0-0",
+    "react": ">= 16.0.0-0 < 19",
     "prop-types": "^15.7.2",
     "rollbar": "^2.21.1"
   }
