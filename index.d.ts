@@ -1,4 +1,4 @@
-import { Component, Context as ReactContext, ReactNode } from 'react';
+import { Component, Context as ReactContext, ErrorInfo, ReactNode } from 'react';
 import Rollbar, { Callback, Configuration } from 'rollbar';
 
 export const LEVEL_DEBUG = 'debug';
@@ -13,13 +13,14 @@ export type LEVEL =
   | typeof LEVEL_ERROR
   | typeof LEVEL_CRITICAL;
 
+type Extra = Record<string | number, unknown>;
 export interface ErrorBoundaryProps {
   children: ReactNode;
   fallbackUI?: ReactNode;
   errorMessage?: string | (() => string);
   extra?:
-    | Record<string | number, unknown>
-    | (() => Record<string | number, unknown>);
+    | Extra
+    | ((error: Error, errorInfo: ErrorInfo) => Extra);
   level?: LEVEL | (() => LEVEL);
   callback?: Callback<any>;
 }
