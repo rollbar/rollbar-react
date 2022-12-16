@@ -1,10 +1,28 @@
-# Rollbar React SDK
+<p align="center">
+  <img alt="rollbar-logo" src="https://user-images.githubusercontent.com/3300063/207964480-54eda665-d6fe-4527-ba51-b0ab3f41f10b.png" />
+</p>
+
+<h1 align="center">Rollbar React SDK</h1>
+
+<p align="center">
+  <strong>Proactively discover, predict, and resolve errors in real-time with <a href="https://rollbar.com">Rollbar’s</a> error monitoring platform. <a href="https://rollbar.com/signup/">Start tracking errors today</a>!</strong>
+</p>
+
+---
+
 
 React features to enhance using Rollbar.js in React Applications.
 
 This SDK provides a wrapper around the base [Rollbar.js] SDK in order to provide an
 SDK that matches the intention of how to build React Apps with a declarative API, features for the latest React API like
 hooks and ErrorBoundaries, as well as simplify using Rollbar within a React SPA.
+
+## Key benefits of using Rollbar React are:
+- **Telemetry:** The telemetry timeline provides a list of “breadcrumbs” events that can help developers understand and fix problems in their client-side javascript. <a href="https://docs.rollbar.com/docs/rollbarjs-telemetry">Learn more about telemetry</a>.
+- **Automatic error grouping:** Rollbar aggregates Occurrences caused by the same error into Items that represent application issues. <a href="https://docs.rollbar.com/docs/grouping-occurrences">Learn more about reducing log noise</a>.
+- **Advanced search:** Filter items by many different properties. <a href="https://docs.rollbar.com/docs/search-items">Learn more about search</a>.
+- **Customizable notifications:** Rollbar supports several messaging and incident management tools where your team can get notified about errors and important events by real-time alerts. <a href="https://docs.rollbar.com/docs/notifications">Learn more about Rollbar notifications</a>.
+
 
 ### In Beta
 
