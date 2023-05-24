@@ -16,10 +16,7 @@ export type LEVEL =
 type Extra = Record<string | number, unknown>;
 export interface ErrorBoundaryProps {
   children: ReactNode;
-  fallbackUI?: (props: {
-    error: Error | null;
-    resetError: () => void;
-  }) => ReactNode;
+  fallbackUI?: React.ComponentType<{ error: Error | null, resetError: () => void }>;
   errorMessage?: string | (() => string);
   extra?:
     | Extra
