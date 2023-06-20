@@ -1,4 +1,4 @@
-import { Component, Context as ReactContext, ErrorInfo, ReactNode } from 'react';
+import { Component, Context as ReactContext, ErrorInfo, ReactNode, ComponentType } from 'react';
 import Rollbar, { Callback, Configuration } from 'rollbar';
 
 export const LEVEL_DEBUG = 'debug';
@@ -16,7 +16,7 @@ export type LEVEL =
 type Extra = Record<string | number, unknown>;
 export interface ErrorBoundaryProps {
   children: ReactNode;
-  fallbackUI?: ReactNode;
+  fallbackUI?: ComponentType<{ error: Error | null, resetError: () => void }>;
   errorMessage?: string | (() => string);
   extra?:
     | Extra
