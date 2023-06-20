@@ -1,6 +1,6 @@
 {
   "name": "@rollbar/react",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "description": "Effortlessly track and debug errors in your React applications with Rollbar. This package includes advanced error tracking features and a set of React-specific enhancements to help you identify and fix issues more quickly.",
   "main": "lib",
   "module": "dist",
