@@ -1,22 +1,22 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react'
 import styles from '../styles/Home.module.css'
 
-import { useRollbar, RollbarContext } from '@rollbar/react';
+import { useRollbar, RollbarContext } from '@rollbar/react'
 
 const Home: NextPage = () => {
-  const rollbar = useRollbar();
+  const rollbar = useRollbar()
 
   const sendMessage = useCallback(() => {
-    rollbar.info('manual message');
+    rollbar.info('manual message')
   }, [rollbar])
 
-  const [errorState, setErrorState] = useState(false);
+  const [errorState, setErrorState] = useState(false)
 
   if (errorState) {
-    throw new Error('uncaught error (nextjs)');
+    throw new Error('uncaught error (nextjs)')
   }
 
   return (
@@ -32,12 +32,11 @@ const Home: NextPage = () => {
           <h1 className={styles.title}>
             Welcome to <a href="https://nextjs.org">Next.js!</a>
           </h1>
-  
+
           <p className={styles.description}>
             Get started by sending a message{' '}
-            <button onClick={sendMessage}>send</button>{' '}
-            or throwing an uncaught exception{' '}
-            <button onClick={() => setErrorState(true)}>throw</button>
+            <button onClick={sendMessage}>send</button> or throwing an uncaught
+            exception <button onClick={() => setErrorState(true)}>throw</button>
           </p>
         </main>
 
@@ -49,7 +48,12 @@ const Home: NextPage = () => {
           >
             Powered by{' '}
             <span className={styles.logo}>
-              <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
+              <Image
+                src="/vercel.svg"
+                alt="Vercel Logo"
+                width={72}
+                height={16}
+              />
             </span>
           </a>
         </footer>

@@ -1,8 +1,8 @@
-import commonjs from '@rollup/plugin-commonjs';
-import resolve from '@rollup/plugin-node-resolve';
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
-import babel from '@rollup/plugin-babel';
-import pkg from './package.json';
+import commonjs from '@rollup/plugin-commonjs'
+import resolve from '@rollup/plugin-node-resolve'
+import peerDepsExternal from 'rollup-plugin-peer-deps-external'
+import babel from '@rollup/plugin-babel'
+import pkg from './package.json'
 
 const COMMON_PLUGINS = [
   resolve(),
@@ -24,12 +24,9 @@ export default [
         react: 'React',
         'prop-types': 'PropTypes',
         rollbar: 'Rollbar',
-      }
+      },
     },
-    plugins: [
-      ...COMMON_PLUGINS,
-      commonjs(),
-    ],
+    plugins: [...COMMON_PLUGINS, commonjs()],
   },
 
   {
@@ -61,9 +58,6 @@ export default [
         exports: 'named',
       },
     ],
-    plugins: [
-      ...COMMON_PLUGINS,
-    ],
+    plugins: [...COMMON_PLUGINS],
   },
-];
-
+]

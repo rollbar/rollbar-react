@@ -1,8 +1,8 @@
-import { useRef } from 'react';
+import { useRef } from 'react'
 
 // EXPERIMENTAL (NOT IN USE): wrap the instance of rollbar to prevent modification
 export function useWrappedRollbar(rollbar) {
-  const rb = useRef(rollbar);
+  const rb = useRef(rollbar)
   return {
     log: (...args) => rb.current.log(...args),
     debug: (...args) => rb.current.debug(...args),

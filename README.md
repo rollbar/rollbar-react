@@ -10,7 +10,6 @@
 
 ---
 
-
 React features to enhance using Rollbar.js in React Applications.
 
 This SDK provides a wrapper around the base [Rollbar.js] SDK in order to provide an
@@ -18,11 +17,11 @@ SDK that matches the intention of how to build React Apps with a declarative API
 hooks and ErrorBoundaries, as well as simplify using Rollbar within a React SPA.
 
 ## Key benefits of using Rollbar React are:
+
 - **Telemetry:** The telemetry timeline provides a list of “breadcrumbs” events that can help developers understand and fix problems in their client-side javascript. <a href="https://docs.rollbar.com/docs/rollbarjs-telemetry">Learn more about telemetry</a>.
 - **Automatic error grouping:** Rollbar aggregates Occurrences caused by the same error into Items that represent application issues. <a href="https://docs.rollbar.com/docs/grouping-occurrences">Learn more about reducing log noise</a>.
 - **Advanced search:** Filter items by many different properties. <a href="https://docs.rollbar.com/docs/search-items">Learn more about search</a>.
 - **Customizable notifications:** Rollbar supports several messaging and incident management tools where your team can get notified about errors and important events by real-time alerts. <a href="https://docs.rollbar.com/docs/notifications">Learn more about Rollbar notifications</a>.
-
 
 ### In Beta
 
@@ -143,21 +142,17 @@ The simplest way to use the `Provider` is to provide a configuration as the `con
 instance of Rollbar for you and provide that to its child tree:
 
 ```javascript
-import React from 'react';
-import { Provider } from '@rollbar/react';
+import React from 'react'
+import { Provider } from '@rollbar/react'
 
 // same configuration you would create for the Rollbar.js SDK
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   environment: 'production',
-};
+}
 
 export function App(props) {
-  return (
-    <Provider config={rollbarConfig}>
-      …
-    </Provider>
-  );
+  return <Provider config={rollbarConfig}>…</Provider>
 }
 ```
 
@@ -167,24 +162,20 @@ Sometimes you may need to instantiate an instance of Rollbar before adding it to
 `instance` prop to pass it to the `Provider` like this:
 
 ```javascript
-import React from 'react';
-import Rollbar from 'rollbar';
-import { Provider } from '@rollbar/react';
+import React from 'react'
+import Rollbar from 'rollbar'
+import { Provider } from '@rollbar/react'
 
 // same configuration you would create for the Rollbar.js SDK
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   environment: 'production',
-};
+}
 
-const rollbar = new Rollbar(rollbarConfig);
+const rollbar = new Rollbar(rollbarConfig)
 
 export function App(props) {
-  return (
-    <Provider instance={rollbar}>
-      …
-    </Provider>
-  );
+  return <Provider instance={rollbar}>…</Provider>
 }
 ```
 
@@ -199,18 +190,14 @@ To use the Rollbar React SDK with the [React Native SDK], pass the instance that
 `instance` prop, like this:
 
 ```javascript
-import React from 'react';
-import { Client } from 'rollbar-react-native';
-import { Provider } from '@rollbar/react';
+import React from 'react'
+import { Client } from 'rollbar-react-native'
+import { Provider } from '@rollbar/react'
 
-const rollbarClient = new Client('POST_CLIENT_ITEM_ACCESS_TOKEN');
+const rollbarClient = new Client('POST_CLIENT_ITEM_ACCESS_TOKEN')
 
 export function App(props) {
-  return (
-    <Provider instance={rollbarClient.rollbar}>
-      …
-    </Provider>
-  );
+  return <Provider instance={rollbarClient.rollbar}>…</Provider>
 }
 ```
 
@@ -231,23 +218,21 @@ You can add an `ErrorBoundary` component to the top of your tree right after the
 and it will just work:
 
 ```javascript
-import React from 'react';
-import { Provider, ErrorBoundary } from '@rollbar/react';
+import React from 'react'
+import { Provider, ErrorBoundary } from '@rollbar/react'
 
 // same configuration you would create for the Rollbar.js SDK
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   environment: 'production',
-};
+}
 
 export function App(props) {
   return (
     <Provider config={rollbarConfig}>
-      <ErrorBoundary>
-        …
-      </ErrorBoundary>
+      <ErrorBoundary>…</ErrorBoundary>
     </Provider>
-  );
+  )
 }
 ```
 
@@ -260,23 +245,31 @@ These `prop`s take either a value or a function that will be invoked with the `e
 API's `componentDidCatch` method (i.e. signature is `(error, info)`).
 
 ```javascript
-import React from 'react';
-import { Provider, ErrorBoundary, LEVEL_WARN } from '@rollbar/react';
+import React from 'react'
+import { Provider, ErrorBoundary, LEVEL_WARN } from '@rollbar/react'
 
 // same configuration you would create for the Rollbar.js SDK
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   environment: 'production',
-};
+}
 
 export function App(props) {
   return (
     <Provider config={rollbarConfig}>
-      <ErrorBoundary level={LEVEL_WARN} errorMessage="Error in React render" extra={(error, info) => info.componentStack.includes('Experimental') ? { experiment: true } : {} }>
+      <ErrorBoundary
+        level={LEVEL_WARN}
+        errorMessage="Error in React render"
+        extra={(error, info) =>
+          info.componentStack.includes('Experimental')
+            ? { experiment: true }
+            : {}
+        }
+      >
         …
       </ErrorBoundary>
     </Provider>
-  );
+  )
 }
 ```
 
@@ -288,21 +281,23 @@ UI caused during the render cycle of React.
 It can accept a value that is a React Component
 
 ```javascript
-import React from 'react';
-import { Provider, ErrorBoundary, LEVEL_WARN } from '@rollbar/react';
+import React from 'react'
+import { Provider, ErrorBoundary, LEVEL_WARN } from '@rollbar/react'
 
 // same configuration you would create for the Rollbar.js SDK
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   environment: 'production',
-};
+}
 
-const ErrorDisplay = ({ error, resetError }) => ( // <-- props passed to fallbackUI component
+const ErrorDisplay = (
+  { error, resetError } // <-- props passed to fallbackUI component
+) => (
   <div>
     <h1>A following error has occured:</h1>
     <p>{error.toString()}</p>
   </div>
-);
+)
 
 export function App(props) {
   return (
@@ -311,7 +306,7 @@ export function App(props) {
         …
       </ErrorBoundary>
     </Provider>
-  );
+  )
 }
 ```
 
@@ -331,15 +326,11 @@ To use the `RollbarContext` you must provide the `context` prop, a `String` that
 [Rollbar.js] to the value while mounted.
 
 ```javascript
-import React from 'react';
-import { RollbarContext } from '@rollbar/react';
+import React from 'react'
+import { RollbarContext } from '@rollbar/react'
 
 function HomePage() {
-  return (
-    <RollbarContext context="home">
-      …
-    </RollbarContext>
-  )
+  return <RollbarContext context="home">…</RollbarContext>
 }
 ```
 
@@ -352,10 +343,10 @@ to achieve the same result.
 Here is an example of using `RollbarContext` with [React Router] if you have a top level set of routes:
 
 ```javascript
-import React from 'react';
-import { Router, Switch, Route } from 'react-router-dom';
-import { RollbarContext } from '@rollbar/react';
-import { About, ContactDetails, ContactsList } from './pages';
+import React from 'react'
+import { Router, Switch, Route } from 'react-router-dom'
+import { RollbarContext } from '@rollbar/react'
+import { About, ContactDetails, ContactsList } from './pages'
 
 const Routes = () => (
   <Router>
@@ -379,22 +370,20 @@ const Routes = () => (
   </Router>
 )
 
-export default Routes;
+export default Routes
 ```
 
 Here's another example of using `RollbarContext` within a component that manages its own route:
 
 ```javascript
-import React from 'react';
-import { Route } from 'react-router-dom';
-import { RollbarContext } from '@rollbar/react';
+import React from 'react'
+import { Route } from 'react-router-dom'
+import { RollbarContext } from '@rollbar/react'
 
 export default function About(props) {
   return (
     <Route path="/about">
-      <RollbarContext context="/about">
-        …
-      </RollbarContext>
+      <RollbarContext context="/about">…</RollbarContext>
     </Route>
   )
 }
@@ -422,21 +411,21 @@ By default, if no options (see below) are provided, all history updates will upd
 `location.pathname` as the value.
 
 ```javascript
-import Rollbar from 'rollbar';
-import { createBrowserHistory } from 'history';
-import { Provider } from '@rollbar/react';
+import Rollbar from 'rollbar'
+import { createBrowserHistory } from 'history'
+import { Provider } from '@rollbar/react'
 
 // same configuration you would create for the Rollbar.js SDK
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   environment: 'production',
-};
+}
 
-const rollbar = new Rollbar(rollbarConfig);
+const rollbar = new Rollbar(rollbarConfig)
 
-const history = createBrowserHistory();
+const history = createBrowserHistory()
 
-history.listen(historyContext(rollbar));
+history.listen(historyContext(rollbar))
 ```
 
 #### Controlling `historyContext` behavior with options
@@ -458,27 +447,28 @@ The signature is `filter(location, action): Boolean` where `location` is [histor
 Here's an example of using both:
 
 ```javascript
-import Rollbar from 'rollbar';
-import { createBrowserHistory } from 'history';
-import { Provider } from '@rollbar/react';
+import Rollbar from 'rollbar'
+import { createBrowserHistory } from 'history'
+import { Provider } from '@rollbar/react'
 
 // same configuration you would create for the Rollbar.js SDK
 const rollbarConfig = {
   accessToken: 'POST_CLIENT_ITEM_ACCESS_TOKEN',
   environment: 'production',
-};
+}
 
-const rollbar = new Rollbar(rollbarConfig);
+const rollbar = new Rollbar(rollbarConfig)
 
-const ROUTE_PARAMS_RE = /\/\d+/g;
+const ROUTE_PARAMS_RE = /\/\d+/g
 
 const historyListener = historyContext(rollbar, {
   // optional: default uses location.pathname
-  formatter: (location, action) => location.pathname.replace(ROUTE_PARAMS_RE, ''),
+  formatter: (location, action) =>
+    location.pathname.replace(ROUTE_PARAMS_RE, ''),
   // optional: true return sets Rollbar context
   filter: (location, action) => !location.pathname.includes('admin'),
-});
-const unlisten = history.listen(historyListener);
+})
+const unlisten = history.listen(historyListener)
 ```
 
 ## Hooks
@@ -498,26 +488,22 @@ your [Functional Component], use the `useRollbar` hook which will return the ins
 Here is a basic example:
 
 ```javascript
-import { useRollbar } from '@rollbar/react';
+import { useRollbar } from '@rollbar/react'
 
 function ContactDetails({ contactId }) {
-  const rollbar = useRollbar(); // <-- must have parent Provider
-  const [contact, setContact] = useState();
+  const rollbar = useRollbar() // <-- must have parent Provider
+  const [contact, setContact] = useState()
 
   useEffect(async () => {
     try {
-      const { data } = await getContactFromApi(contactId);
-      setContact(data.contact);
+      const { data } = await getContactFromApi(contactId)
+      setContact(data.contact)
     } catch (error) {
-      rollbar.error('Error fetching contact', error, { contactId });
+      rollbar.error('Error fetching contact', error, { contactId })
     }
-  }, [contactId]);
+  }, [contactId])
 
-  return (
-    <div>
-      …
-    </div>
-  );
+  return <div>…</div>
 }
 ```
 
@@ -530,40 +516,32 @@ Here's an example of using it in several components:
 
 ```javascript
 // src/pages/HomePage.js
-import { useRollbarContext } from '@rollbar/react';
+import { useRollbarContext } from '@rollbar/react'
 
 function HomePage(props) {
-  useRollbarContext('home#index');
+  useRollbarContext('home#index')
 
-  return (
-    <div>
-      …
-    </div>
-  );
+  return <div>…</div>
 }
 
 // src/pages/UsersPage.js
-import { useRollbarContext } from '@rollbar/react';
-import UserTable from '../components/users/UserTable';
+import { useRollbarContext } from '@rollbar/react'
+import UserTable from '../components/users/UserTable'
 
 function UsersPage(props) {
-  useRollbarContext('users#list');
+  useRollbarContext('users#list')
 
-  return (
-    <UserTable data={props.users} />
-  );
+  return <UserTable data={props.users} />
 }
 
 // src/pages/UserDetailsPage.js
-import { useRollbarContext } from '@rollbar/react';
-import UserDetails from '../components/users/UserDetails';
+import { useRollbarContext } from '@rollbar/react'
+import UserDetails from '../components/users/UserDetails'
 
 function UserDetailsPage(props) {
-  useRollbarContext('users#details');
+  useRollbarContext('users#details')
 
-  return (
-    <UserDetails user={props.user} />
-  );
+  return <UserDetails user={props.user} />
 }
 ```
 
@@ -583,27 +561,27 @@ and for any future events or messages logged to [Rollbar] will include that pers
 Here is a simple example of using it once the current user has been determined:
 
 ```javascript
-import { useState } from 'react';
-import { useRollbarPerson } from '@rollbar/react';
-import LoggedInHome  from './LoggedInHome';
-import LoggedOutHome from './LoggedOutHome';
+import { useState } from 'react'
+import { useRollbarPerson } from '@rollbar/react'
+import LoggedInHome from './LoggedInHome'
+import LoggedOutHome from './LoggedOutHome'
 
 function Home() {
-  const [currentUser, setCurrentUser] = useState();
-  useRollbarPerson(currentUser);
+  const [currentUser, setCurrentUser] = useState()
+  useRollbarPerson(currentUser)
 
   useEffect(() => {
-    (async () => {
-      const user = await Auth.getCurrentUser();
-      setCurrentUser(user);
+    ;(async () => {
+      const user = await Auth.getCurrentUser()
+      setCurrentUser(user)
     })()
-  });
+  })
 
   if (currentUser != null) {
-    return <LoggedInHome />;
+    return <LoggedInHome />
   }
 
-  return <LoggedOutHome />;
+  return <LoggedOutHome />
 }
 ```
 
@@ -624,46 +602,41 @@ Here is an example of using `useRollbarCaptureEvent` in the render cycle of a [F
 event related to the data that will be rendered in the component
 
 ```javascript
-import { useEffect, useState } from 'react';
-import { useRollbar, useRollbarCaptureEvent, LEVEL_INFO } from '@rollbar/react';
+import { useEffect, useState } from 'react'
+import { useRollbar, useRollbarCaptureEvent, LEVEL_INFO } from '@rollbar/react'
 
 function BookDetails({ bookId }) {
-  const rollbar = useRollbar(); // <-- must have ancestor Provider, same with useRollbarCaptureEvent
-  const [book, setBook] = useState();
+  const rollbar = useRollbar() // <-- must have ancestor Provider, same with useRollbarCaptureEvent
+  const [book, setBook] = useState()
 
   useEffect(async () => {
     try {
-      const { data } = await getBook(bookId);
-      setBook(data.book);
+      const { data } = await getBook(bookId)
+      setBook(data.book)
     } catch (error) {
-      rollbar.error('Error fetching book', error, { bookId }); // <-- use rollbar to log errors as normal
+      rollbar.error('Error fetching book', error, { bookId }) // <-- use rollbar to log errors as normal
     }
-  }, [bookId]);
+  }, [bookId])
 
-  useRollbarCaptureEvent(book, LEVEL_INFO); // <-- only fires when book changes
+  useRollbarCaptureEvent(book, LEVEL_INFO) // <-- only fires when book changes
 
-  return (
-    <div>
-      …
-    </div>
-  )
+  return <div>…</div>
 }
 ```
 
-
-[Rollbar]: https://rollbar.com
-[Rollbar Docs]: https://docs.rollbar.com
-[Rollbar.js]: https://github.com/rollbar/rollbar.js
-[Rollbar.js Setup Instructions]: https://github.com/rollbar/rollbar.js/#setup-instructions
-[React Native SDK]: https://github.com/rollbar/rollbar-react-native
-[Telemetry]: https://docs.rollbar.com/docs/rollbarjs-telemetry
-[`Provider`]: #provider-component
-[`ErrorBoundary`]: #errorboundary-component
-[`RollbarContext`]: #rollbarcontext-component
-[Functional Components]: https://reactjs.org/docs/components-and-props.html#function-and-class-components
-[React Context]: https://reactjs.org/docs/context.html
-[Error Boundaries]: https://reactjs.org/docs/error-boundaries.html
-[React Hooks API]: https://reactjs.org/docs/hooks-intro.html
+[rollbar]: https://rollbar.com
+[rollbar docs]: https://docs.rollbar.com
+[rollbar.js]: https://github.com/rollbar/rollbar.js
+[rollbar.js setup instructions]: https://github.com/rollbar/rollbar.js/#setup-instructions
+[react native sdk]: https://github.com/rollbar/rollbar-react-native
+[telemetry]: https://docs.rollbar.com/docs/rollbarjs-telemetry
+[`provider`]: #provider-component
+[`errorboundary`]: #errorboundary-component
+[`rollbarcontext`]: #rollbarcontext-component
+[functional components]: https://reactjs.org/docs/components-and-props.html#function-and-class-components
+[react context]: https://reactjs.org/docs/context.html
+[error boundaries]: https://reactjs.org/docs/error-boundaries.html
+[react hooks api]: https://reactjs.org/docs/hooks-intro.html
 [history]: https://www.npmjs.com/package/history
 [history.location]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#location
 [history.action]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#action
