@@ -55,7 +55,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prettier: true
-          eslint: false
+          eslint: true
           eslint_args: '--max-warnings 0'
           eslint_extensions: js,jsx,ts,tsx
 
