@@ -3,7 +3,9 @@ import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Rollbar = require('rollbar');
 import {
-  ErrorBoundary, ErrorBoundaryProps, useRollbar
+  ErrorBoundary,
+  ErrorBoundaryProps,
+  useRollbar,
 } from '../rollbar-react';
 import { renderWithProviderProps } from '../utils/provider-util';
 
@@ -12,7 +14,7 @@ describe('ErrorBoundary', () => {
 
   const config: Rollbar.Configuration = {
     accessToken: accessToken,
-    captureUncaught: true
+    captureUncaught: true,
   };
 
   let rollbar: Rollbar;
@@ -24,14 +26,11 @@ describe('ErrorBoundary', () => {
   const errorMessage = 'Test error';
   const extra = { foo: 'bar' };
   const level = 'warn';
-  const callback: Rollbar.Callback = (_err, _resp) => 'foo'
-  const Fallback = () => <div>{fallbackMessage}</div>
+  const callback: Rollbar.Callback = (_err, _resp) => 'foo';
+  const Fallback = () => <div>{fallbackMessage}</div>;
   const TestComponent = (props: Omit<ErrorBoundaryProps, 'children'>) => {
     rollbar = useRollbar();
-    rollbar.warn = jest
-      .fn()
-      .mockReturnValue({})
-      .mockName('Rollbar.warn');
+    rollbar.warn = jest.fn().mockReturnValue({}).mockName('Rollbar.warn');
 
     return (
       <ErrorBoundary {...props}>
@@ -50,24 +49,27 @@ describe('ErrorBoundary', () => {
         callback={callback}
       />,
       {},
-      {config: config}
+      { config: config },
     );
 
     expect(screen.getByText(fallbackMessage)).toBeInTheDocument();
 
     expect(rollbar.warn).toHaveBeenLastCalledWith(
-      errorMessage, error, expect.objectContaining(extra), callback
+      errorMessage,
+      error,
+      expect.objectContaining(extra),
+      callback,
     );
   });
 
   describe('with extra prop as a fn', () => {
     it('should send extra value to rollbar on error', () => {
       const extraFn: ErrorBoundaryProps['extra'] = (error, errorInfo) => {
-        expect(error).toBeInstanceOf(Error)
-        expect(errorInfo).toHaveProperty('componentStack')
+        expect(error).toBeInstanceOf(Error);
+        expect(errorInfo).toHaveProperty('componentStack');
         return extra;
       };
-  
+
       renderWithProviderProps(
         <TestComponent
           fallbackUI={Fallback}
@@ -77,11 +79,14 @@ describe('ErrorBoundary', () => {
           callback={callback}
         />,
         {},
-        {config: config}
+        { config: config },
       );
-  
+
       expect(rollbar.warn).toHaveBeenLastCalledWith(
-        errorMessage, error, expect.objectContaining(extra), callback
+        errorMessage,
+        error,
+        expect.objectContaining(extra),
+        callback,
       );
     });
   });

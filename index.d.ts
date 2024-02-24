@@ -1,4 +1,10 @@
-import { Component, Context as ReactContext, ErrorInfo, ReactNode, ComponentType } from 'react';
+import {
+  Component,
+  Context as ReactContext,
+  ErrorInfo,
+  ReactNode,
+  ComponentType,
+} from 'react';
 import Rollbar, { Callback, Configuration } from 'rollbar';
 
 export const LEVEL_DEBUG = 'debug';
@@ -16,11 +22,9 @@ export type LEVEL =
 type Extra = Record<string | number, unknown>;
 export interface ErrorBoundaryProps {
   children: ReactNode;
-  fallbackUI?: ComponentType<{ error: Error | null, resetError: () => void }>;
+  fallbackUI?: ComponentType<{ error: Error | null; resetError: () => void }>;
   errorMessage?: string | (() => string);
-  extra?:
-    | Extra
-    | ((error: Error, errorInfo: ErrorInfo) => Extra);
+  extra?: Extra | ((error: Error, errorInfo: ErrorInfo) => Extra);
   level?: LEVEL | (() => LEVEL);
   callback?: Callback<any>;
 }
@@ -67,7 +71,9 @@ interface ContextInterface {
 
 export const Context: ReactContext<ContextInterface>;
 
-export function getRollbarFromContext(context: ReactContext<ContextInterface>): Rollbar;
+export function getRollbarFromContext(
+  context: ReactContext<ContextInterface>,
+): Rollbar;
 export function useRollbar(): Rollbar;
 export function useRollbarConfiguration(config: Rollbar.Configuration): void;
 export function useRollbarContext(ctx?: string, isLayout?: boolean): void;
@@ -80,11 +86,11 @@ export function historyContext(
   args: {
     formatter: (location: string, action: string) => string;
     filter: (location: string, action: string) => boolean;
-  }
+  },
 ): (
   v4Location: {
     action: string;
     filter: (location: string, action: string) => boolean;
   },
-  v4action: string
+  v4action: string,
 ) => void;

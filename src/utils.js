@@ -10,12 +10,15 @@ export function value(val, defaultTo, ...args) {
 }
 
 export function wrapValue(val, defaultAs) {
-  return (defaultTo, ...args) => value(val, defaultAs === undefined ? defaultTo : defaultAs, ...args);
+  return (defaultTo, ...args) =>
+    value(val, defaultAs === undefined ? defaultTo : defaultAs, ...args);
 }
 
 export function isValidLevel(level) {
-  return VALID_LEVELS[level] >= VALID_LEVELS[constants.LEVEL_DEBUG]
-    && VALID_LEVELS[level] <= VALID_LEVELS[constants.LEVEL_CRITICAL];
+  return (
+    VALID_LEVELS[level] >= VALID_LEVELS[constants.LEVEL_DEBUG] &&
+    VALID_LEVELS[level] <= VALID_LEVELS[constants.LEVEL_CRITICAL]
+  );
 }
 
 export function isRollbarInstance(instance) {

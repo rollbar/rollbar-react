@@ -5,13 +5,10 @@ import { Provider } from '../rollbar-react';
 export const renderWithProviderProps = (
   ui: ReactElement,
   options: RenderOptions,
-  providerProps: any
+  providerProps: any,
 ) => {
-  return render(
-    ui,
-    {
-      wrapper: props => <Provider {...props} {...providerProps} />,
-      ...options
-    }
-  );
-}
+  return render(ui, {
+    wrapper: (props) => <Provider {...props} {...providerProps} />,
+    ...options,
+  });
+};

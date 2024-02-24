@@ -13,9 +13,9 @@ export function useRollbarContext(ctx = '', isLayout = false) {
   const rollbar = useRollbar();
   (isLayout ? useLayoutEffect : useEffect)(() => {
     const origCtx = rollbar.options.payload.context;
-    rollbar.configure({ payload: { context: ctx }});
+    rollbar.configure({ payload: { context: ctx } });
     return () => {
-      rollbar.configure({ payload: { context: origCtx }});
+      rollbar.configure({ payload: { context: origCtx } });
     };
   }, [ctx]);
 }

@@ -11,7 +11,7 @@ export class RollbarConfiguration extends Component {
   static propTypes = {
     options: PropTypes.object.isRequired,
     children: PropTypes.node,
-  }
+  };
 
   static contextType = Context;
 
@@ -24,7 +24,7 @@ export class RollbarConfiguration extends Component {
     const rollbar = getRollbarFromContext(this.context);
     const { options } = this.props;
     // TODO: need to clone this somehow to prevent downstream changes from manipulating it
-    const parentConfig = (o => o)(rollbar.options);
+    const parentConfig = ((o) => o)(rollbar.options);
     this.setState({ parentConfig });
     rollbar.configure(options);
   }

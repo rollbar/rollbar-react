@@ -17,15 +17,18 @@ export class ErrorBoundary extends Component {
     level: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
     callback: PropTypes.func,
     children: PropTypes.node,
-  }
+  };
 
   static defaultProps = {
     level: LEVEL_ERROR,
-  }
+  };
 
   constructor(props) {
     super(props);
-    invariant(utils.isValidLevel(props.level), `${props.level} is not a valid level setting for Rollbar`);
+    invariant(
+      utils.isValidLevel(props.level),
+      `${props.level} is not a valid level setting for Rollbar`,
+    );
     this.state = { ...INITIAL_ERROR_STATE };
   }
 
@@ -49,7 +52,7 @@ export class ErrorBoundary extends Component {
 
   resetError = () => {
     this.setState(INITIAL_ERROR_STATE);
-  }
+  };
 
   render() {
     const { hasError, error } = this.state;

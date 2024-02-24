@@ -18,6 +18,6 @@ export default class ExampleClass extends React.Component {
   }
 
   render(): ReactNode {
-    return <div>Class component</div>
+    return <div>Class component</div>;
   }
 }

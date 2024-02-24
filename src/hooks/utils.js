@@ -11,5 +11,5 @@ export function useWrappedRollbar(rollbar) {
     error: (...args) => rb.current.error(...args),
     critical: (...args) => rb.current.critical(...args),
     captureEvent: (...args) => rb.current.captureEvent(...args),
-  }
+  };
 }

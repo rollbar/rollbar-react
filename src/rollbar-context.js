@@ -7,11 +7,11 @@ export class RollbarContext extends Component {
     context: PropTypes.string.isRequired,
     onRender: PropTypes.bool,
     children: PropTypes.node,
-  }
+  };
 
   static defaultProps = {
     onRender: false,
-  }
+  };
 
   static contextType = Context;
 
@@ -28,8 +28,8 @@ export class RollbarContext extends Component {
     if (storePrevious) {
       this.setState({ previousContext: rollbar.options.payload.context });
     }
-    rollbar.configure({ payload: { context }});
-  }
+    rollbar.configure({ payload: { context } });
+  };
 
   componentDidMount() {
     const { onRender } = this.props;
@@ -48,7 +48,7 @@ export class RollbarContext extends Component {
   componentWillUnmount() {
     const rollbar = getRollbarFromContext(this.context);
     const { previousContext } = this.state;
-    rollbar.configure({ payload: { context: previousContext }});
+    rollbar.configure({ payload: { context: previousContext } });
   }
 
   render() {

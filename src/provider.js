@@ -26,11 +26,16 @@ export class Provider extends Component {
     Rollbar: PropTypes.func,
     config: (props, propName, componentName) => {
       if (!props.config && !props.instance) {
-        return new Error(`One of the required props 'config' or 'instance' must be set for ${componentName}.`)
+        return new Error(
+          `One of the required props 'config' or 'instance' must be set for ${componentName}.`,
+        );
       }
       if (props.config) {
         const configType = typeof props.config;
-        if (configType === 'function' || configType === 'object' && !Array.isArray(configType)) {
+        if (
+          configType === 'function' ||
+          (configType === 'object' && !Array.isArray(configType))
+        ) {
           return;
         }
         return new Error(`${propName} must be either an Object or a Function`);
@@ -38,21 +43,25 @@ export class Provider extends Component {
     },
     instance: (props, propName, componentName) => {
       if (!props.config && !props.instance) {
-        return new Error(`One of the required props 'config' or 'instance' must be set for ${componentName}.`)
+        return new Error(
+          `One of the required props 'config' or 'instance' must be set for ${componentName}.`,
+        );
       }
       if (props.instance && !isRollbarInstance(props.instance)) {
-        return new Error(`${propName} must be a configured instance of Rollbar`);
+        return new Error(
+          `${propName} must be a configured instance of Rollbar`,
+        );
       }
     },
-    children: PropTypes.node
-  }
+    children: PropTypes.node,
+  };
 
   constructor(props) {
     super(props);
     const { config, Rollbar: ctor = Rollbar, instance } = this.props;
     invariant(
       !instance || isRollbarInstance(instance),
-      '`instance` must be a configured instance of Rollbar'
+      '`instance` must be a configured instance of Rollbar',
     );
     const options = typeof config === 'function' ? config() : config;
     const rollbar = instance || new ctor(options);
@@ -61,8 +70,6 @@ export class Provider extends Component {
     this.state = { rollbar, options };
   }
 
-
-
   // componentDidUpdate()
 
   render() {
@@ -70,9 +77,15 @@ export class Provider extends Component {
     const { rollbar, options } = this.state;
 
     return (
-      <Context.Provider value={{ [RollbarInstance]: rollbar, [BaseOptions]: options, [RollbarCtor]: ctor }}>
+      <Context.Provider
+        value={{
+          [RollbarInstance]: rollbar,
+          [BaseOptions]: options,
+          [RollbarCtor]: ctor,
+        }}
+      >
         {children}
       </Context.Provider>
-    )
+    );
   }
 }

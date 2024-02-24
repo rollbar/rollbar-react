@@ -9,7 +9,7 @@ const COMMON_PLUGINS = [
   peerDepsExternal(),
   // jsx({ factory: 'React.createElement' }),
   babel({ babelHelpers: 'bundled', exclude: ['node_modules/**'] }),
-]
+];
 
 export default [
   {
@@ -24,12 +24,9 @@ export default [
         react: 'React',
         'prop-types': 'PropTypes',
         rollbar: 'Rollbar',
-      }
+      },
     },
-    plugins: [
-      ...COMMON_PLUGINS,
-      commonjs(),
-    ],
+    plugins: [...COMMON_PLUGINS, commonjs()],
   },
 
   {
@@ -61,9 +58,6 @@ export default [
         exports: 'named',
       },
     ],
-    plugins: [
-      ...COMMON_PLUGINS,
-    ],
+    plugins: [...COMMON_PLUGINS],
   },
 ];
-

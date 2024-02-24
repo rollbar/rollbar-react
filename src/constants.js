@@ -10,4 +10,4 @@ export default {
   [LEVEL_WARN]: 3,
   [LEVEL_ERROR]: 4,
   [LEVEL_CRITICAL]: 5,
-}
+};
