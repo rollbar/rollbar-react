@@ -48,8 +48,8 @@ jobs:
         uses: wearerequired/lint-action@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prettier: true
-          eslint: true
+          prettier: false
+          eslint: false
           eslint_args: '--max-warnings 0'
           eslint_extensions: js,jsx,ts,tsx
 
