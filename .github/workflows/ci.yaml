@@ -1,27 +1,57 @@
-name: rollbar-react CI
+name: ci
 
 on:
   push:
-    branches: [ '**' ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [14.x]
+        node: [14, 16, 18, 20]
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm install
-    - run: npm run lint
-    - run: npm run test
+      - name: Set up node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ matrix.node }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.node }}-
+            ${{ runner.os }}-node-
+            ${{ runner.os }}-
+
+      - name: Install library dependencies
+        run: npm ci
+      - name: Install examples/create-react-app dependencies
+        run: cd examples/create-react-app && npm ci
+      - name: Install examples/nextjs dependencies
+        run: cd examples/nextjs && npm ci
+      - name: Install examples/typescript dependencies
+        run: cd examples/typescript && npm ci
+
+      - name: Lint
+        uses: wearerequired/lint-action@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prettier: true
+          eslint: true
+          eslint_args: '--max-warnings 0'
+          eslint_extensions: js,jsx,ts,tsx
+
+      - name: Test
+        run: npm run test
