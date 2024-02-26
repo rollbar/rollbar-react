@@ -1,0 +1,10 @@
+.github
+.next
+build
+bundles
+coverage
+dist
+lib
+node_modules
+out
+public
