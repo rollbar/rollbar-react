@@ -19,6 +19,12 @@ plugins:
   - testing-library
 overrides:
   - files:
+      - '**/*.mjs'
+    parserOptions:
+      babelOptions:
+        parserOpts:
+          plugins: ['importAssertions']
+  - files:
       - '**/__tests__/**/*.[jt]s?(x)'
       - '**/?(*.)+(spec|test).[jt]s?(x)'
     extends:
