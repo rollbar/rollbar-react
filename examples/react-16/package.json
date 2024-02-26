@@ -1,0 +1,45 @@
+{
+  "name": "react-16",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@rollbar/react": "file:.yalc/@rollbar/react",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^12",
+    "@testing-library/user-event": "^13.5.0",
+    "react": "^16",
+    "react-dom": "^16",
+    "react-scripts": "^2",
+    "rollbar": "^2.26.3",
+    "web-vitals": "^2.1.4",
+    "serve": "^11"
+  },
+  "engines": {
+    "node": "14.x || 15.x || 16.x"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "serve": "serve -s build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
