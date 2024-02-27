@@ -3,12 +3,13 @@
 This project demonstrates @rollbar/react in a basic Typescript app.
 
 ## Rollbar usage in this example
-* Provider component
-* ErrorBoundary
-* Usage from class components
-* Hooks
-  * useRollbar
-  * useRollbarContext
+
+- Provider component
+- ErrorBoundary
+- Usage from class components
+- Hooks
+  - useRollbar
+  - useRollbarContext
 
 ## Rollbar configuration
 
@@ -16,6 +17,7 @@ To send live reports to Rollbar, replace `POST_CLIENT_ITEM_TOKEN` in App.tsx
 with your valid client token before building your webpack bundle.
 
 ## Documentation
+
 For complete documentation see https://docs.rollbar.com/docs/react
 and https://docs.rollbar.com/docs/react-ts.
 

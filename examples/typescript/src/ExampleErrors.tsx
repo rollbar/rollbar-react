@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRollbar, useRollbarContext } from '@rollbar/react';
 
 interface Props {
-  name: string
+  name: string;
 }
 
 function ExampleErrors(props: Props): ReactElement {
@@ -14,7 +14,7 @@ function ExampleErrors(props: Props): ReactElement {
 
   const sendRollbarMessage = () => {
     rollbar.info(`test react-app message: ${props.name}`);
-  }
+  };
 
   const sendRollbarError = () => {
     try {
@@ -22,7 +22,7 @@ function ExampleErrors(props: Props): ReactElement {
     } catch (e) {
       rollbar.error(e as Rollbar.LogArgument);
     }
-  }
+  };
 
   const [errorState, setErrorState] = useState({ error: false });
 
@@ -31,7 +31,7 @@ function ExampleErrors(props: Props): ReactElement {
     // because React won't send errors within event handlers
     // to the error boundary component.
     setErrorState({ error: true });
-  }
+  };
 
   if (errorState.error) {
     // This uncaught error will be handled by the ErrorBoundary.
@@ -41,15 +41,21 @@ function ExampleErrors(props: Props): ReactElement {
   return (
     <>
       <h1>Rollbar Example for React Child Component: {props.name}</h1>
-      <button id='rollbar-message' onClick={ sendRollbarMessage }>Send Rollbar Message</button>
-      <button id='rollbar-error' onClick={ sendRollbarError }>Send Caught Error</button>
-      <button id='uncaught-error' onClick={ updateErrorState }>Throw Uncaught Error</button>
+      <button id="rollbar-message" onClick={sendRollbarMessage}>
+        Send Rollbar Message
+      </button>
+      <button id="rollbar-error" onClick={sendRollbarError}>
+        Send Caught Error
+      </button>
+      <button id="uncaught-error" onClick={updateErrorState}>
+        Throw Uncaught Error
+      </button>
     </>
-  )
+  );
 }
 
 ExampleErrors.propTypes = {
-  name: PropTypes.string
-}
+  name: PropTypes.string,
+};
 
 export default ExampleErrors;

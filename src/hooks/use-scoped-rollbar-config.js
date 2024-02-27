@@ -3,7 +3,11 @@
 // NO TEST COVERAGE
 
 import { useContext } from 'react';
-import { Context, getRollbarFromContext, getRollbarConstructorFromContext } from '../provider';
+import {
+  Context,
+  getRollbarFromContext,
+  getRollbarConstructorFromContext,
+} from '../provider';
 
 export function useScopedConfiguration(config) {
   const ctx = useContext(Context);

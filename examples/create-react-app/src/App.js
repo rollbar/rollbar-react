@@ -1,20 +1,17 @@
-import { React, useState, useMemo } from 'react'
-import { Routes, Route, Link } from 'react-router-dom'
+import { React, useState, useMemo } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
 import {
   Provider as RollbarProvider,
   ErrorBoundary,
   RollbarContext,
-  useRollbar
-} from '@rollbar/react'
+  useRollbar,
+} from '@rollbar/react';
 
 import './App.css';
 
 const rollbarConfig = {
   accessToken: process.env.REACT_APP_PUBLIC_ROLLBAR_TOKEN,
-  hostSafeList: [
-    'localhost:3000',
-    'localhost:4000',
-  ],
+  hostSafeList: ['localhost:3000', 'localhost:4000'],
   captureUncaught: true,
   captureUnhandledRejections: true,
   payload: {
@@ -34,7 +31,9 @@ function App() {
       <ErrorBoundary
         level="critical"
         errorMessage="example error boundary message"
-        fallbackUI={() => <p style={{ color: 'red' }}>Oops, there was an error.</p>}
+        fallbackUI={() => (
+          <p style={{ color: 'red' }}>Oops, there was an error.</p>
+        )}
         extra={{ more: 'data' }}
         callback={() => console.log('an exception was sent to rollbar')}
       >
@@ -76,9 +75,14 @@ function RouteA() {
     <RollbarContext context="/a-context">
       <h1>A</h1>
       <p>Message: {fullMessage}</p>
-      <input value={message} onChange={(event) => setMessage(event.target.value)} />
+      <input
+        value={message}
+        onChange={(event) => setMessage(event.target.value)}
+      />
       <br />
-      <button onClick={() => rollbar.info(`Hello, ${message}.`)}>send message</button>
+      <button onClick={() => rollbar.info(`Hello, ${message}.`)}>
+        send message
+      </button>
     </RollbarContext>
   );
 }
@@ -91,7 +95,7 @@ function RouteB() {
     // because React won't send errors within event handlers
     // to the error boundary component.
     setErrorState({
-      error: true
+      error: true,
     });
   };
 
@@ -103,7 +107,7 @@ function RouteB() {
   return (
     <RollbarContext context="/b-context">
       <h1>B</h1>
-      <button id='uncaught-error' onClick={updateErrorState}>
+      <button id="uncaught-error" onClick={updateErrorState}>
         Throw Uncaught Error
       </button>
     </RollbarContext>

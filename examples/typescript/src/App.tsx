@@ -18,9 +18,9 @@ function App(): ReactElement {
         javascript: {
           code_version: '1.0.0',
           source_map_enabled: true,
-        }
-      }
-    }
+        },
+      },
+    },
   };
 
   // To provide your own Rollbar.js instance, pass `instance` to Provider
@@ -29,12 +29,10 @@ function App(): ReactElement {
   // <Provider instance={instance} >
 
   return (
-    <Provider config={rollbarConfig} >
+    <Provider config={rollbarConfig}>
       <div className="App">
         <header className="App-header">
-          <p>
-            Rollbar React Example
-          </p>
+          <p>Rollbar React Example</p>
         </header>
         <ErrorBoundary fallbackUI={FallbackUI} extra={{ data: 'foo' }}>
           <Router>
@@ -49,8 +47,8 @@ function App(): ReactElement {
               </ul>
             </nav>
             <Routes>
-              <Route path="/" element={<ExampleErrors name='Home' />} />
-              <Route path="/away" element={<ExampleErrors name='Away' />} />
+              <Route path="/" element={<ExampleErrors name="Home" />} />
+              <Route path="/away" element={<ExampleErrors name="Away" />} />
             </Routes>
           </Router>
           <ExampleClass />

@@ -10,7 +10,6 @@
 
 ---
 
-
 React features to enhance using Rollbar.js in React Applications.
 
 This SDK provides a wrapper around the base [Rollbar.js] SDK in order to provide an
@@ -18,11 +17,11 @@ SDK that matches the intention of how to build React Apps with a declarative API
 hooks and ErrorBoundaries, as well as simplify using Rollbar within a React SPA.
 
 ## Key benefits of using Rollbar React are:
+
 - **Telemetry:** The telemetry timeline provides a list of “breadcrumbs” events that can help developers understand and fix problems in their client-side javascript. <a href="https://docs.rollbar.com/docs/rollbarjs-telemetry">Learn more about telemetry</a>.
 - **Automatic error grouping:** Rollbar aggregates Occurrences caused by the same error into Items that represent application issues. <a href="https://docs.rollbar.com/docs/grouping-occurrences">Learn more about reducing log noise</a>.
 - **Advanced search:** Filter items by many different properties. <a href="https://docs.rollbar.com/docs/search-items">Learn more about search</a>.
 - **Customizable notifications:** Rollbar supports several messaging and incident management tools where your team can get notified about errors and important events by real-time alerts. <a href="https://docs.rollbar.com/docs/notifications">Learn more about Rollbar notifications</a>.
-
 
 ### In Beta
 
@@ -153,11 +152,7 @@ const rollbarConfig = {
 };
 
 export function App(props) {
-  return (
-    <Provider config={rollbarConfig}>
-      …
-    </Provider>
-  );
+  return <Provider config={rollbarConfig}>…</Provider>;
 }
 ```
 
@@ -180,11 +175,7 @@ const rollbarConfig = {
 const rollbar = new Rollbar(rollbarConfig);
 
 export function App(props) {
-  return (
-    <Provider instance={rollbar}>
-      …
-    </Provider>
-  );
+  return <Provider instance={rollbar}>…</Provider>;
 }
 ```
 
@@ -206,11 +197,7 @@ import { Provider } from '@rollbar/react';
 const rollbarClient = new Client('POST_CLIENT_ITEM_ACCESS_TOKEN');
 
 export function App(props) {
-  return (
-    <Provider instance={rollbarClient.rollbar}>
-      …
-    </Provider>
-  );
+  return <Provider instance={rollbarClient.rollbar}>…</Provider>;
 }
 ```
 
@@ -243,9 +230,7 @@ const rollbarConfig = {
 export function App(props) {
   return (
     <Provider config={rollbarConfig}>
-      <ErrorBoundary>
-        …
-      </ErrorBoundary>
+      <ErrorBoundary>…</ErrorBoundary>
     </Provider>
   );
 }
@@ -272,7 +257,15 @@ const rollbarConfig = {
 export function App(props) {
   return (
     <Provider config={rollbarConfig}>
-      <ErrorBoundary level={LEVEL_WARN} errorMessage="Error in React render" extra={(error, info) => info.componentStack.includes('Experimental') ? { experiment: true } : {} }>
+      <ErrorBoundary
+        level={LEVEL_WARN}
+        errorMessage="Error in React render"
+        extra={(error, info) =>
+          info.componentStack.includes('Experimental')
+            ? { experiment: true }
+            : {}
+        }
+      >
         …
       </ErrorBoundary>
     </Provider>
@@ -297,7 +290,9 @@ const rollbarConfig = {
   environment: 'production',
 };
 
-const ErrorDisplay = ({ error, resetError }) => ( // <-- props passed to fallbackUI component
+const ErrorDisplay = (
+  { error, resetError }, // <-- props passed to fallbackUI component
+) => (
   <div>
     <h1>A following error has occured:</h1>
     <p>{error.toString()}</p>
@@ -335,11 +330,7 @@ import React from 'react';
 import { RollbarContext } from '@rollbar/react';
 
 function HomePage() {
-  return (
-    <RollbarContext context="home">
-      …
-    </RollbarContext>
-  )
+  return <RollbarContext context="home">…</RollbarContext>;
 }
 ```
 
@@ -377,7 +368,7 @@ const Routes = () => (
       </Route>
     </Switch>
   </Router>
-)
+);
 
 export default Routes;
 ```
@@ -392,11 +383,9 @@ import { RollbarContext } from '@rollbar/react';
 export default function About(props) {
   return (
     <Route path="/about">
-      <RollbarContext context="/about">
-        …
-      </RollbarContext>
+      <RollbarContext context="/about">…</RollbarContext>
     </Route>
-  )
+  );
 }
 ```
 
@@ -474,7 +463,8 @@ const ROUTE_PARAMS_RE = /\/\d+/g;
 
 const historyListener = historyContext(rollbar, {
   // optional: default uses location.pathname
-  formatter: (location, action) => location.pathname.replace(ROUTE_PARAMS_RE, ''),
+  formatter: (location, action) =>
+    location.pathname.replace(ROUTE_PARAMS_RE, ''),
   // optional: true return sets Rollbar context
   filter: (location, action) => !location.pathname.includes('admin'),
 });
@@ -513,11 +503,7 @@ function ContactDetails({ contactId }) {
     }
   }, [contactId]);
 
-  return (
-    <div>
-      …
-    </div>
-  );
+  return <div>…</div>;
 }
 ```
 
@@ -535,11 +521,7 @@ import { useRollbarContext } from '@rollbar/react';
 function HomePage(props) {
   useRollbarContext('home#index');
 
-  return (
-    <div>
-      …
-    </div>
-  );
+  return <div>…</div>;
 }
 
 // src/pages/UsersPage.js
@@ -549,9 +531,7 @@ import UserTable from '../components/users/UserTable';
 function UsersPage(props) {
   useRollbarContext('users#list');
 
-  return (
-    <UserTable data={props.users} />
-  );
+  return <UserTable data={props.users} />;
 }
 
 // src/pages/UserDetailsPage.js
@@ -561,9 +541,7 @@ import UserDetails from '../components/users/UserDetails';
 function UserDetailsPage(props) {
   useRollbarContext('users#details');
 
-  return (
-    <UserDetails user={props.user} />
-  );
+  return <UserDetails user={props.user} />;
 }
 ```
 
@@ -585,7 +563,7 @@ Here is a simple example of using it once the current user has been determined:
 ```javascript
 import { useState } from 'react';
 import { useRollbarPerson } from '@rollbar/react';
-import LoggedInHome  from './LoggedInHome';
+import LoggedInHome from './LoggedInHome';
 import LoggedOutHome from './LoggedOutHome';
 
 function Home() {
@@ -596,7 +574,7 @@ function Home() {
     (async () => {
       const user = await Auth.getCurrentUser();
       setCurrentUser(user);
-    })()
+    })();
   });
 
   if (currentUser != null) {
@@ -642,28 +620,23 @@ function BookDetails({ bookId }) {
 
   useRollbarCaptureEvent(book, LEVEL_INFO); // <-- only fires when book changes
 
-  return (
-    <div>
-      …
-    </div>
-  )
+  return <div>…</div>;
 }
 ```
 
-
-[Rollbar]: https://rollbar.com
-[Rollbar Docs]: https://docs.rollbar.com
-[Rollbar.js]: https://github.com/rollbar/rollbar.js
-[Rollbar.js Setup Instructions]: https://github.com/rollbar/rollbar.js/#setup-instructions
-[React Native SDK]: https://github.com/rollbar/rollbar-react-native
-[Telemetry]: https://docs.rollbar.com/docs/rollbarjs-telemetry
-[`Provider`]: #provider-component
-[`ErrorBoundary`]: #errorboundary-component
-[`RollbarContext`]: #rollbarcontext-component
-[Functional Components]: https://reactjs.org/docs/components-and-props.html#function-and-class-components
-[React Context]: https://reactjs.org/docs/context.html
-[Error Boundaries]: https://reactjs.org/docs/error-boundaries.html
-[React Hooks API]: https://reactjs.org/docs/hooks-intro.html
+[rollbar]: https://rollbar.com
+[rollbar docs]: https://docs.rollbar.com
+[rollbar.js]: https://github.com/rollbar/rollbar.js
+[rollbar.js setup instructions]: https://github.com/rollbar/rollbar.js/#setup-instructions
+[react native sdk]: https://github.com/rollbar/rollbar-react-native
+[telemetry]: https://docs.rollbar.com/docs/rollbarjs-telemetry
+[`provider`]: #provider-component
+[`errorboundary`]: #errorboundary-component
+[`rollbarcontext`]: #rollbarcontext-component
+[functional components]: https://reactjs.org/docs/components-and-props.html#function-and-class-components
+[react context]: https://reactjs.org/docs/context.html
+[error boundaries]: https://reactjs.org/docs/error-boundaries.html
+[react hooks api]: https://reactjs.org/docs/hooks-intro.html
 [history]: https://www.npmjs.com/package/history
 [history.location]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#location
 [history.action]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#action
