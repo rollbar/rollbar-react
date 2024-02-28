@@ -14,7 +14,15 @@ jobs:
 
     strategy:
       matrix:
-        node: [14, 16, 18, 20]
+        include:
+          - node: 14
+            npm: 8
+          - node: 16
+            npm: 8
+          - node: 18
+            npm: 9
+          - node: 20
+            npm: 10
 
     steps:
       - name: Checkout
@@ -26,9 +34,9 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@^${{ matrix.npm }}
 
-      - name: Cache
+      - name: Set up cache
         uses: actions/cache@v4
         with:
           path: ~/.npm
