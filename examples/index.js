@@ -1,3 +1,10 @@
+/**
+ * @file examples/index.js
+ * @fileoverview This is a repertoire of snippets exploring Rollbar's usage.
+ */
+
+/* eslint-disable no-unused-vars, react/jsx-no-undef, react/prop-types */
+
 import React, { useEffect, useState } from 'react';
 import Rollbar from 'rollbar';
 import { Router, Switch, Route } from 'react-router-dom';
@@ -33,11 +40,11 @@ const rollbarConfig = {
   environment: 'production',
 };
 
-const rollbar = new Client('POST_CLIENT_ITEM_ACCESS_TOKEN');
+const rollbar_client = new Client('POST_CLIENT_ITEM_ACCESS_TOKEN');
 
 const ROUTE_PARAMS_RE = /\/\d+/g;
 
-const historyListener = historyContext(rollbar, {
+const historyListener = historyContext(rollbar_client, {
   // optional: default uses location.pathname
   formatter: (location, action) =>
     location.pathname.replace(ROUTE_PARAMS_RE, ''),
@@ -96,14 +103,15 @@ function Contacts(props) {
   );
 }
 
+/* eslint-disable react-hooks/exhaustive-deps, no-undef */
+
 function Home() {
   const [currentUser, setCurrentUser] = useState();
 
+  useRollbarPerson(currentUser);
+
   useEffect(async () => {
     const user = await Auth.getCurrentUser();
-    if (user) {
-      useRollbarPerson(user);
-    }
     setCurrentUser(user);
   });
 
@@ -132,6 +140,8 @@ function ContactDetails({ contactId }) {
   return <div>…</div>;
 }
 
+/* eslint-enable react-hooks/exhaustive-deps, no-undef */
+
 function App(props) {
   return (
     <Provider rollbar={rollbar}>
@@ -139,7 +149,7 @@ function App(props) {
       <RollbarContext name="">
         <ErrorBoundary fallbackUI={ErrorDisplay}>
           <div>
-            <h1>I'm Here</h1>
+            <h1>I&apos;m Here</h1>
             <MyInput>
               <ErrorBoundary
                 level
@@ -173,6 +183,7 @@ function MyInput(props) {
 
   useEffect(() => {
     try {
+      throw new Error('no data to fetch');
     } catch (err) {
       rollbar.error('error fetching data', err);
     }

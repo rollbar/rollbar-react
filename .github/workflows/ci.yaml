@@ -14,7 +14,15 @@ jobs:
 
     strategy:
       matrix:
-        node: [14, 16, 18, 20]
+        include:
+          - node: 14
+            npm: 8
+          - node: 16
+            npm: 8
+          - node: 18
+            npm: 9
+          - node: 20
+            npm: 10
 
     steps:
       - name: Checkout
@@ -25,7 +33,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Cache
+      - name: Update npm
+        run: npm install -g npm@^${{ matrix.npm }}
+
+      - name: Set up cache
         uses: actions/cache@v4
         with:
           path: ~/.npm
@@ -49,9 +60,18 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prettier: true
-          eslint: false
+          eslint: true
           eslint_args: '--max-warnings 0'
           eslint_extensions: js,jsx,ts,tsx
+
+      - name: Build library
+        run: npm run build
+      - name: Build examples/create-react-app
+        run: cd examples/create-react-app && npm run build
+      - name: Build examples/nextjs
+        run: cd examples/nextjs && npm run build
+      - name: Build examples/typescript
+        run: cd examples/typescript && npm run build
 
       - name: Test
         run: npm run test
