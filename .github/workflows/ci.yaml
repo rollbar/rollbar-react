@@ -15,13 +15,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - node: 14
-            npm: 8
           - node: 16
             npm: 8
           - node: 18
             npm: 9
           - node: 20
+            npm: 10
+          - node: 21
             npm: 10
 
     steps:
