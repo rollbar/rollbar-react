@@ -17,7 +17,23 @@ plugins:
   - react
   - react-hooks
   - testing-library
+rules:
+  indent: [error, 2]
+  quotes:
+    - error
+    - single
+    - avoidEscape: true
+      allowTemplateLiterals: true
+settings:
+  react:
+    version: detect
 overrides:
+  - files:
+      - '**/*.mjs'
+    parserOptions:
+      babelOptions:
+        parserOpts:
+          plugins: ['importAssertions']
   - files:
       - '**/__tests__/**/*.[jt]s?(x)'
       - '**/?(*.)+(spec|test).[jt]s?(x)'
@@ -42,13 +58,3 @@ overrides:
       # For compat with jest: https://typescript-eslint.io/rules/unbound-method/
       '@typescript-eslint/unbound-method': 'off'
       'jest/unbound-method': 'error'
-rules:
-  quotes:
-    - error
-    - single
-    - avoidEscape: true
-      allowTemplateLiterals: true
-  indent: [error, 2]
-settings:
-  react:
-    version: detect

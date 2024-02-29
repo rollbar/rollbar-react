@@ -48,8 +48,8 @@ jobs:
 
       - name: Install library dependencies
         run: npm ci
-      - name: Install examples/create-react-app dependencies
-        run: cd examples/create-react-app && npm ci
+      - name: Install examples/react-17 dependencies
+        run: cd examples/react-17 && npm ci
       - name: Install examples/nextjs dependencies
         run: cd examples/nextjs && npm ci
       - name: Install examples/typescript dependencies
@@ -66,8 +66,8 @@ jobs:
 
       - name: Build library
         run: npm run build
-      - name: Build examples/create-react-app
-        run: cd examples/create-react-app && npm run build
+      - name: Build examples/react-17
+        run: cd examples/react-17 && npm run build
       - name: Build examples/nextjs
         run: cd examples/nextjs && npm run build
       - name: Build examples/typescript
