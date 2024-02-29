@@ -1,4 +1,4 @@
-import { React, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import {
   Provider as RollbarProvider,
