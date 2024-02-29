@@ -23,7 +23,9 @@
     "lint": "eslint src babel.config.js index.d.ts",
     "build:clean": "rimraf dist lib bundles",
     "build:files": "rollup --config",
-    "build": "npm run build:clean && npm run build:files"
+    "build": "npm run build:clean && npm run build:files",
+    "build:examples": "ts-node ./scripts/build-examples.ts",
+    "build:all": "npm run build && ts-node ./scripts/build-examples.ts"
   },
   "repository": {
     "type": "git",
@@ -87,6 +89,7 @@
     "rollup": "^4.12.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   },
   "peerDependencies": {

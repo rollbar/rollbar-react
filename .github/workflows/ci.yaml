@@ -36,7 +36,7 @@ jobs:
       - name: Update npm
         run: npm install -g npm@^${{ matrix.npm }}
 
-      - name: Set up cache
+      - name: Cache
         uses: actions/cache@v4
         with:
           path: ~/.npm
@@ -46,14 +46,8 @@ jobs:
             ${{ runner.os }}-node-
             ${{ runner.os }}-
 
-      - name: Install library dependencies
-        run: npm ci
-      - name: Install examples/react-17 dependencies
-        run: cd examples/react-17 && npm ci
-      - name: Install examples/nextjs dependencies
-        run: cd examples/nextjs && npm ci
-      - name: Install examples/typescript dependencies
-        run: cd examples/typescript && npm ci
+      - name: Install
+        run: node scripts/install-all.js ci
 
       - name: Lint
         uses: wearerequired/lint-action@v2
@@ -64,14 +58,23 @@ jobs:
           eslint_args: '--max-warnings 0'
           eslint_extensions: js,jsx,ts,tsx
 
-      - name: Build library
-        run: npm run build
-      - name: Build examples/react-17
-        run: cd examples/react-17 && npm run build
-      - name: Build examples/nextjs
-        run: cd examples/nextjs && npm run build
-      - name: Build examples/typescript
-        run: cd examples/typescript && npm run build
+      - name: Build
+        run: npm run build:all
 
       - name: Test
         run: npm run test
+
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: node scripts/install-all.js
