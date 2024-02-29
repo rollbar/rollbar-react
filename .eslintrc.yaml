@@ -17,13 +17,6 @@ plugins:
   - react
   - react-hooks
   - testing-library
-rules:
-  indent: [error, 2]
-  quotes:
-    - error
-    - single
-    - avoidEscape: true
-      allowTemplateLiterals: true
 settings:
   react:
     version: detect
