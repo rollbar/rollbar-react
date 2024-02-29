@@ -18,6 +18,9 @@
     "bundles",
     "index.d.ts"
   ],
+  "engines": {
+    "node": ">=16"
+  },
   "scripts": {
     "test": "jest",
     "lint": "eslint src babel.config.js index.d.ts",

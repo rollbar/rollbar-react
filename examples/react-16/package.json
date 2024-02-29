@@ -3,19 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@rollbar/react": "file:.yalc/@rollbar/react",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^12",
-    "@testing-library/user-event": "^13.5.0",
+    "@rollbar/react": "file:../..",
     "react": "^16",
     "react-dom": "^16",
     "react-scripts": "^2",
     "rollbar": "^2.26.3",
-    "web-vitals": "^2.1.4",
-    "serve": "^11"
+    "serve": "^11",
+    "web-vitals": "^2.1.4"
   },
-  "engines": {
-    "node": "14.x || 15.x || 16.x"
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^12",
+    "@testing-library/user-event": "^13.5.0",
+    "eslint-plugin-react": "^7.33.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -25,6 +25,7 @@
     "serve": "serve -s build"
   },
   "eslintConfig": {
+    "root": true,
     "extends": [
       "react-app",
       "react-app/jest"

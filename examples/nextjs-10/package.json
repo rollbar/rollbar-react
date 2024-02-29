@@ -1,4 +1,6 @@
 {
+  "name": "nextjs-10",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
@@ -6,14 +8,14 @@
     "start": "next start -p 3001"
   },
   "dependencies": {
-    "@rollbar/react": "^0.11.2",
-    "next": "latest",
+    "@rollbar/react": "file:../..",
+    "next": "^10",
     "prop-types": "^15.8.1",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "react": "^16",
+    "react-dom": "^16",
     "rollbar": "^2.26.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=16"
   }
 }
