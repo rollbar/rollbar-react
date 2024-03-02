@@ -1,4 +1,6 @@
-/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
+/**
+ * @type {import('ts-jest').JestConfigWithTsJest}
+ */
 module.exports = {
   roots: ['src/tests'],
   setupFilesAfterEnv: ['./src/tests/jest-setup.ts'],

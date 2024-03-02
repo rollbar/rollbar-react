@@ -1,5 +1,6 @@
 .github
 .next
+.yalc
 build
 bundles
 coverage

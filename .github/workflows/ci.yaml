@@ -47,7 +47,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install
-        run: node scripts/install-all.js ci
+        run: npm run install:all -- ci
 
       - name: Lint
         uses: wearerequired/lint-action@v2
@@ -77,4 +77,4 @@ jobs:
           node-version: 20
 
       - name: Install
-        run: node scripts/install-all.js
+        run: npm run install:all
