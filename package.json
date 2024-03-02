@@ -20,7 +20,9 @@
   ],
   "scripts": {
     "test": "jest",
-    "lint": "eslint src babel.config.js index.d.ts",
+    "lint": "eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx",
+    "lint:examples": "ts-node scripts/foreach-example.ts npx eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx",
+    "lint:all": "npm run lint && npm run lint:examples",
     "install:all": "node scripts/install-all.js",
     "clean:build": "rimraf dist lib bundles",
     "clean:all": "ts-node scripts/clean.ts",

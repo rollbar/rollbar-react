@@ -5,7 +5,6 @@ build
 bundles
 coverage
 dist
-examples
 lib
 node_modules
 out

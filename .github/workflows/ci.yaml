@@ -56,7 +56,10 @@ jobs:
           prettier: true
           eslint: true
           eslint_args: '--max-warnings 0'
-          eslint_extensions: js,jsx,ts,tsx
+          eslint_extensions: js,jsx,mjs,cjs,ts,tsx
+
+      - name: Lint examples
+        run: npm run lint:examples
 
       - name: Build
         run: npm run build:all
