@@ -1,10 +1,4 @@
-import React, { ReactElement } from 'react';
-
-export interface FallbackProps {
-  error?: Error;
-}
-
-export const FallbackUI = ({ error }: FallbackProps): ReactElement => {
+export function FallbackUI({ error }: { error: Error | null }) {
   const message = error?.message || 'unknown error';
-  return <div>Oops, there was an error: {message}</div>;
-};
+  return <p>Oops, there was an error: {message}</p>;
+}

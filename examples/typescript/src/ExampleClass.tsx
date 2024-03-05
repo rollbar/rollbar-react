@@ -12,7 +12,7 @@ export default class ExampleClass extends React.Component {
   rollbar: Rollbar | undefined;
 
   componentDidMount(): void {
-    this.rollbar = getRollbarFromContext(this.context);
+    this.rollbar = getRollbarFromContext(this.context as typeof Context);
 
     this.rollbar.info('message from class component');
   }
