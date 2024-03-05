@@ -27,6 +27,7 @@ export interface ErrorBoundaryProps {
   extra?: Extra | ((error: Error, errorInfo: ErrorInfo) => Extra);
   level?: LEVEL | (() => LEVEL);
   callback?: Callback;
+  rollbar?: Rollbar;
 }
 
 interface ErrorBoundaryState {

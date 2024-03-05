@@ -1,23 +1,17 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Rollbar = require('rollbar');
-import {
-  ErrorBoundary,
-  ErrorBoundaryProps,
-  useRollbar,
-} from '../rollbar-react';
-import { renderWithProviderProps } from '../utils/provider-util';
+import Rollbar from 'rollbar';
+import { ErrorBoundary, ErrorBoundaryProps } from '../rollbar-react';
 
 describe('ErrorBoundary', () => {
   const accessToken = 'POST_CLIENT_ITEM_TOKEN';
 
-  const config: Rollbar.Configuration = {
+  const rollbar: Rollbar = new Rollbar({
     accessToken: accessToken,
     captureUncaught: true,
-  };
-
-  let rollbar: Rollbar;
+  });
+  rollbar.warn = jest.fn();
   const error: Error = new Error('Test');
   const ThrowError = () => {
     throw error;
@@ -29,9 +23,6 @@ describe('ErrorBoundary', () => {
   const callback: Rollbar.Callback = (_err, _resp) => 'foo';
   const Fallback = () => <div>{fallbackMessage}</div>;
   const TestComponent = (props: Omit<ErrorBoundaryProps, 'children'>) => {
-    rollbar = useRollbar();
-    rollbar.warn = jest.fn().mockReturnValue({}).mockName('Rollbar.warn');
-
     return (
       <ErrorBoundary {...props}>
         <ThrowError />
@@ -40,16 +31,16 @@ describe('ErrorBoundary', () => {
   };
 
   it('should display the fallback UI and send rollbar on error', () => {
-    renderWithProviderProps(
+    render(
       <TestComponent
         fallbackUI={Fallback}
         errorMessage={errorMessage}
         extra={extra}
         level={level}
         callback={callback}
+        rollbar={rollbar}
       />,
       {},
-      { config: config },
     );
 
     expect(screen.getByText(fallbackMessage)).toBeInTheDocument();
@@ -70,16 +61,16 @@ describe('ErrorBoundary', () => {
         return extra;
       };
 
-      renderWithProviderProps(
+      render(
         <TestComponent
           fallbackUI={Fallback}
           errorMessage={errorMessage}
           extra={extraFn}
           level={level}
           callback={callback}
+          rollbar={rollbar}
         />,
         {},
-        { config: config },
       );
 
       expect(rollbar.warn).toHaveBeenLastCalledWith(
