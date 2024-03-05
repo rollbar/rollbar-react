@@ -21,13 +21,13 @@ export type LEVEL =
 
 type Extra = Record<string | number, unknown>;
 export interface ErrorBoundaryProps {
+  rollbar: Rollbar;
   children: ReactNode;
   fallbackUI?: ComponentType<{ error: Error | null; resetError: () => void }>;
   errorMessage?: string | (() => string);
   extra?: Extra | ((error: Error, errorInfo: ErrorInfo) => Extra);
   level?: LEVEL | (() => LEVEL);
   callback?: Callback;
-  rollbar?: Rollbar;
 }
 
 interface ErrorBoundaryState {

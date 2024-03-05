@@ -37,12 +37,7 @@ export default [
       index: 'src/index.js',
       constant: 'src/constants.js',
       ErrorBoundary: 'src/error-boundary.js',
-      RollbarContext: 'src/rollbar-context.js',
       historyContext: 'src/history-context.js',
-      useRollbarConfiguration: 'src/hooks/use-rollbar-config.js',
-      useRollbarContext: 'src/hooks/use-rollbar-context.js',
-      useRollbarPerson: 'src/hooks/use-rollbar-person.js',
-      useRollbarCaptureEvent: 'src/hooks/use-rollbar-capture-event.js',
     },
     output: [
       {
