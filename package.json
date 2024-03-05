@@ -20,12 +20,17 @@
   ],
   "scripts": {
     "test": "jest",
-    "lint": "eslint src babel.config.js index.d.ts",
-    "build:clean": "rimraf dist lib bundles",
+    "lint": "eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx",
+    "lint:examples": "ts-node scripts/foreach-example.ts npx eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx",
+    "lint:all": "npm run lint && npm run lint:examples",
+    "install:all": "node scripts/install-all.js",
+    "clean:build": "rimraf dist lib bundles",
+    "clean:all": "ts-node scripts/clean.ts",
     "build:files": "rollup --config",
-    "build": "npm run build:clean && npm run build:files",
-    "build:examples": "ts-node ./scripts/build-examples.ts",
-    "build:all": "npm run build && ts-node ./scripts/build-examples.ts"
+    "build": "npm run clean:build && npm run build:files",
+    "build:examples": "ts-node scripts/foreach-example.ts npm run build",
+    "build:all": "npm run build && npm run build:examples",
+    "yalc:pub": "yalc publish --sig --push"
   },
   "repository": {
     "type": "git",
@@ -77,6 +82,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-testing-library": "^6.2.0",
     "fast-check": "^3.15.1",
+    "glob": "^10.3.10",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.2.5",
@@ -90,7 +96,8 @@
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "yalc": "^1.0.0-pre.53"
   },
   "peerDependencies": {
     "prop-types": "^15.7.2",

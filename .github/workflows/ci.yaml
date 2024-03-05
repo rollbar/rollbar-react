@@ -47,7 +47,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install
-        run: node scripts/install-all.js ci
+        run: npm run install:all -- ci
 
       - name: Lint
         uses: wearerequired/lint-action@v2
@@ -56,7 +56,10 @@ jobs:
           prettier: true
           eslint: true
           eslint_args: '--max-warnings 0'
-          eslint_extensions: js,jsx,ts,tsx
+          eslint_extensions: js,jsx,mjs,cjs,ts,tsx
+
+      - name: Lint examples
+        run: npm run lint:examples
 
       - name: Build
         run: npm run build:all
@@ -77,4 +80,4 @@ jobs:
           node-version: 20
 
       - name: Install
-        run: node scripts/install-all.js
+        run: npm run install:all
