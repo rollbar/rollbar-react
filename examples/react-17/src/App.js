@@ -1,15 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
-import {
-  Provider as RollbarProvider,
-  ErrorBoundary,
-  RollbarContext,
-  useRollbar,
-} from '@rollbar/react';
+import Rollbar from 'rollbar';
+import { ErrorBoundary } from '@rollbar/react';
 
 import './App.css';
 
-const rollbarConfig = {
+const rollbar = new Rollbar({
   accessToken: process.env.REACT_APP_PUBLIC_ROLLBAR_TOKEN,
   hostSafeList: ['localhost:3000', 'localhost:4000'],
   captureUncaught: true,
@@ -23,33 +19,32 @@ const rollbarConfig = {
       },
     },
   },
-};
+});
 
 function App() {
   return (
-    <RollbarProvider config={rollbarConfig}>
-      <ErrorBoundary
-        level="critical"
-        errorMessage="example error boundary message"
-        fallbackUI={() => (
-          <p style={{ color: 'red' }}>Oops, there was an error.</p>
-        )}
-        extra={{ more: 'data' }}
-        callback={() => console.log('an exception was sent to rollbar')}
-      >
-        <nav>
-          <ul>
-            <li>
-              <Link to="/a">A</Link>
-            </li>
-            <li>
-              <Link to="/b">B</Link>
-            </li>
-          </ul>
-        </nav>
-        <Router />
-      </ErrorBoundary>
-    </RollbarProvider>
+    <ErrorBoundary
+      rollbar={rollbar}
+      level="critical"
+      errorMessage="example error boundary message"
+      fallbackUI={() => (
+        <p style={{ color: 'red' }}>Oops, there was an error.</p>
+      )}
+      extra={{ more: 'data' }}
+      callback={() => console.log('an exception was sent to rollbar')}
+    >
+      <nav>
+        <ul>
+          <li>
+            <Link to="/a">A</Link>
+          </li>
+          <li>
+            <Link to="/b">B</Link>
+          </li>
+        </ul>
+      </nav>
+      <Router />
+    </ErrorBoundary>
   );
 }
 
