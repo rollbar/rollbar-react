@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Provider, ErrorBoundary } from '@rollbar/react';
+import Fallback from './fallback';
+import Callback from './callback';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -38,11 +40,9 @@ export default function RootLayout({
           <ErrorBoundary
             level="critical"
             errorMessage="example error boundary message"
-            fallbackUI={() => (
-              <p style={{ color: 'red' }}>Oops, there was an error.</p>
-            )}
+            fallbackUI={Fallback}
             extra={{ more: 'data' }}
-            callback={() => console.log('an exception was sent to rollbar')}
+            callback={Callback}
           >
             {children}
           </ErrorBoundary>
