@@ -15,6 +15,14 @@ const COMMON_PLUGINS = [
   babel({ babelHelpers: 'bundled', exclude: ['node_modules/**'] }),
 ];
 
+const entryFileNames = (chunkInfo) => {
+  if (chunkInfo.name.includes('node_modules')) {
+    return chunkInfo.name.replace(/node_modules/g, 'external') + '.js';
+  }
+
+  return '[name].js';
+};
+
 const onwarn = (warning, warn) => {
   if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
     return;
@@ -61,16 +69,18 @@ export default [
         dir: pkg.module,
         format: 'es',
         sourcemap: true,
-        entryFileNames: '[name].js',
         preserveModules: true,
+        preserveModulesRoot: 'src',
+        entryFileNames,
       },
       {
         dir: pkg.main,
         format: 'cjs',
         sourcemap: true,
-        entryFileNames: '[name].js',
         exports: 'named',
         preserveModules: true,
+        preserveModulesRoot: 'src',
+        entryFileNames,
       },
     ],
     plugins: [
