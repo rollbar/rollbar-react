@@ -1,3 +1,5 @@
+'use client';
+
 // EXPERIMENTAL
 // NOT EXPORTED AS PART OF PUBLIC API YET: no current test coverage
 

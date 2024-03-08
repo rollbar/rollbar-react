@@ -1,3 +1,5 @@
+'use client';
+
 import invariant from 'tiny-invariant';
 import { useEffect, useLayoutEffect } from 'react';
 import { useRollbar } from './use-rollbar';

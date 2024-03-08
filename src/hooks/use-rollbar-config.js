@@ -1,3 +1,5 @@
+'use client';
+
 import { useRollbar } from './use-rollbar';
 
 export function useRollbarConfiguration(config) {
