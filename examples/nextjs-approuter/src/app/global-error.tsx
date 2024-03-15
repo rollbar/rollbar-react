@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { rollbarInstance } from '@/rollbar';
 import { ResetPage } from '@/components/ResetPage';
+import { useRollbar } from '@rollbar/react';
 
 export default function GlobalError({
   error,
@@ -11,8 +11,10 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const rollbar = useRollbar();
+
   useEffect(() => {
-    rollbarInstance.error(error);
+    rollbar.error(error);
   }, [error]);
 
   return (

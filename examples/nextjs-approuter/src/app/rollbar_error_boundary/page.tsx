@@ -1,3 +1,5 @@
+'use client';
+
 import { ErrorBoundary } from '@rollbar/react';
 
 import { ResetPage } from '@/components/ResetPage';
