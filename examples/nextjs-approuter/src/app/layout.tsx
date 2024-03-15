@@ -1,27 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Provider, ErrorBoundary } from '@rollbar/react';
-import Fallback from './fallback';
-import Callback from './callback';
 
 const inter = Inter({ subsets: ['latin'] });
-
-const rollbarConfig = {
-  accessToken: process.env.NEXT_PUBLIC_ROLLBAR_TOKEN,
-  hostSafeList: ['localhost:3000', 'localhost:4000'],
-  captureUncaught: true,
-  captureUnhandledRejections: true,
-  payload: {
-    environment: 'development',
-    client: {
-      javascript: {
-        code_version: '1.0.0',
-        source_map_enabled: true,
-      },
-    },
-  },
-};
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -35,19 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Provider config={rollbarConfig}>
-          <ErrorBoundary
-            level="critical"
-            errorMessage="example error boundary message"
-            fallbackUI={Fallback}
-            extra={{ more: 'data' }}
-            callback={Callback}
-          >
-            {children}
-          </ErrorBoundary>
-        </Provider>
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
