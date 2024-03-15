@@ -15,7 +15,7 @@ export default function GlobalError({
 
   useEffect(() => {
     rollbar.error(error);
-  }, [error]);
+  }, [error, rollbar]);
 
   return (
     <html>

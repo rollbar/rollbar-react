@@ -14,7 +14,7 @@ export default function Error({
   const rollbar = useRollbar();
   useEffect(() => {
     rollbar.error(error);
-  }, [error]);
+  }, [error, rollbar]);
 
   return <ResetPage reset={reset} />;
 }
