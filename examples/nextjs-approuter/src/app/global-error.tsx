@@ -1,7 +1,8 @@
 'use client';
 
-import { rollbarInstance } from '@/rollbar';
 import { useEffect } from 'react';
+import { rollbarInstance } from '@/rollbar';
+import { ResetPage } from '@/components/ResetPage';
 
 export default function GlobalError({
   error,
@@ -17,8 +18,7 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <h2>Something went wrong!</h2>
-        <button onClick={() => reset()}>Try again</button>
+        <ResetPage reset={reset} />;
       </body>
     </html>
   );
