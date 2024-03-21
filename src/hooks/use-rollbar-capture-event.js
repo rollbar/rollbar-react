@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect } from 'react';
 import invariant from 'tiny-invariant';
 import { LEVEL_INFO } from '../constants';
