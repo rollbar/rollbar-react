@@ -30,7 +30,7 @@ describe('Provider', () => {
     );
   };
 
-  class TestClassConponent extends React.Component {
+  class TestClassComponent extends React.Component {
     static contextType = Context;
     declare context: ReactContext<ContextInterface>;
     rollbar: Rollbar | undefined;
@@ -84,7 +84,7 @@ describe('Provider', () => {
   });
 
   it('should provide a Rollbar instance to class components', async () => {
-    renderWithProviderProps(<TestClassConponent />, {}, { config: config });
+    renderWithProviderProps(<TestClassComponent />, {}, { config: config });
 
     await waitFor(() => {
       screen.getByText(screenText);
