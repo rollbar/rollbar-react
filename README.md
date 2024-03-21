@@ -29,18 +29,32 @@ It is currently in a public Beta release right now as we push towards a 1.0 rele
 we want to provide full capability for using React SDK in your production apps. We expect a 1.0 release to come in the
 next month.
 
+- [Key benefits of using Rollbar React are:](#key-benefits-of-using-rollbar-react-are)
+  - [In Beta](#in-beta)
 - [Setup Instructions](#setup-instructions)
   - [Prerequisites](#prerequisites)
-  - [Install Rollbar SDK](#install-rollbar-sdk)
+  - [Install Rollbar React SDK](#install-rollbar-react-sdk)
 - [Usage and Reference](#usage-and-reference)
   - [Simplest Usage Possible](#simplest-usage-possible)
+  - [Using with Next.js App Router](#using-with-nextjs-app-router)
 - [Components](#components)
   - [`Provider` Component](#provider-component)
+    - [Configuration Only Usage](#configuration-only-usage)
+    - [Instance Usage](#instance-usage)
+    - [React Native Usage](#react-native-usage)
   - [`ErrorBoundary` Component](#errorboundary-component)
+    - [Simple Usage](#simple-usage)
+    - [Pass `prop`s to control behavior](#pass-props-to-control-behavior)
+    - [Pass a Fallback UI](#pass-a-fallback-ui)
   - [`RollbarContext` Component](#rollbarcontext-component)
+    - [Basic Usage](#basic-usage)
+    - [Using with React Router](#using-with-react-router)
 - [Functions](#functions)
-  - [`historyContext`](#historycontext)
+  - [`historyContext` to create `history.listener`](#historycontext-to-create-historylistener)
+    - [Basic `historyContext` usage](#basic-historycontext-usage)
+    - [Controlling `historyContext` behavior with options](#controlling-historycontext-behavior-with-options)
 - [Hooks](#hooks)
+  - [Reliance on `Provider`](#reliance-on-provider)
   - [`useRollbar` hook](#userollbar-hook)
   - [`useRollbarContext` hook](#userollbarcontext-hook)
   - [`useRollbarPerson` hook](#userollbarperson-hook)
@@ -124,6 +138,34 @@ export default function App() {
   );
 };
 ```
+
+### Using with Next.js App Router
+
+The first step to using Rollbar with the Next.js App Router is to configure your Rollbar instance.
+
+```ts
+import Rollbar from 'rollbar';
+
+const baseConfig = {
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+  environment: process.env.NODE_ENV,
+};
+
+export const clientConfig = {
+  accessToken: process.env.NEXT_PUBLIC_POST_CLIENT_ITEM_TOKEN,
+  ...baseConfig,
+};
+
+export const serverInstance = new Rollbar({
+  accessToken: process.env.POST_SERVER_ITEM_TOKEN,
+  ...baseConfig,
+});
+```
+
+We suggest you create a single instance for use server side, to be certain there are not more than one, and a config to use in your client side components. React Server Components limit you to passing simple objects as props from Server Components to Client Components. The config object can be used by the Rollbar Provider to construct your Rollbar instance.
+
+There's a fully functional [example](./examples/nextjs-approuter) that showcases the many ways in which you can integrate Rollbar into your modern web-app leveraging React Server Components and the Next.js App Router.
 
 ## Components
 
