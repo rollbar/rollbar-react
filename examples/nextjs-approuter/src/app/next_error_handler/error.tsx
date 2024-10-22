@@ -1,4 +1,4 @@
-'use client'; // Error components must be Client Components
+'use client';
 
 import { useEffect } from 'react';
 import { ResetPage } from '@/components/ResetPage';
@@ -8,11 +8,14 @@ export default function Error({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
+  error: Error;
   reset: () => void;
 }) {
+  console.log('NextErrorHandler error', error);
+
   const rollbar = useRollbar();
   useEffect(() => {
+    console.log('NextErrorHandler useEffect', rollbar);
     rollbar.error(error);
   }, [error, rollbar]);
 

@@ -7,11 +7,11 @@ const baseConfig = {
 };
 
 export const clientConfig = {
-  accessToken: process.env.NEXT_PUBLIC_POST_CLIENT_ITEM_TOKEN,
+  accessToken: process.env.NEXT_PUBLIC_ROLLBAR_CLIENT_TOKEN,
   ...baseConfig,
 };
 
 export const serverInstance = new Rollbar({
-  accessToken: process.env.POST_SERVER_ITEM_TOKEN,
+  accessToken: process.env.ROLLBAR_SERVER_TOKEN,
   ...baseConfig,
 });

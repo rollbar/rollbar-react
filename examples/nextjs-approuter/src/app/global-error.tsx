@@ -2,20 +2,21 @@
 
 import { useEffect } from 'react';
 import { ResetPage } from '@/components/ResetPage';
-import { useRollbar } from '@rollbar/react';
+import Rollbar from 'rollbar';
+import { clientConfig } from '@/rollbar';
 
 export default function GlobalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
+  error: Error;
   reset: () => void;
 }) {
-  const rollbar = useRollbar();
 
   useEffect(() => {
+    const rollbar = new Rollbar(clientConfig)
     rollbar.error(error);
-  }, [error, rollbar]);
+  }, [error]);
 
   return (
     <html>
