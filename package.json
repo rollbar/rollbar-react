@@ -103,7 +103,7 @@
   },
   "peerDependencies": {
     "prop-types": "^15.7.2",
-    "react": "16.x || 17.x || 18.x",
+    "react": "16.x || 17.x || 18.x || 19.x",
     "rollbar": "^2.26.4"
   }
 }
