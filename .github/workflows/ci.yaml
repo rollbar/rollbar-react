@@ -15,11 +15,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - node: 18
-            npm: 9
+          # Next.js 16 (used by the examples) requires node >= 20.9.
           - node: 20
             npm: 10
           - node: 21
+            npm: 10
+          - node: 22
             npm: 10
 
     continue-on-error: true
