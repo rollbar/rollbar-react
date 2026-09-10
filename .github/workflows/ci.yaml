@@ -67,6 +67,9 @@ jobs:
       - name: Test
         run: npm run test
 
+      - name: Test examples
+        run: npm run test:examples
+
   install:
     runs-on: ubuntu-latest
 
