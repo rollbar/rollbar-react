@@ -13,17 +13,19 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      # Let every runtime report rather than cancelling its siblings on the
+      # first failure -- but the job itself must still fail the run.
+      fail-fast: false
       matrix:
         include:
-          # Next.js 16 (used by the examples) requires node >= 20.9.
+          # Next.js 16 (used by the examples) requires node >= 20.9, so 20 is
+          # the floor. 22 and 24 are the maintained LTS lines.
           - node: 20
-            npm: 10
-          - node: 21
             npm: 10
           - node: 22
             npm: 10
-
-    continue-on-error: true
+          - node: 24
+            npm: 11
 
     steps:
       - name: Checkout
