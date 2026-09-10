@@ -5,8 +5,14 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import babel from '@rollup/plugin-babel';
-import pkg from './package.json' assert { type: 'json' };
 import preserveDirectives from 'rollup-plugin-preserve-directives';
+import { createRequire } from 'node:module';
+
+// Read package.json through `require` rather than an import attribute: the
+// `assert { type: 'json' }` syntax this used to rely on was removed in node 22,
+// and its replacement (`with { type: 'json' }`) only exists from node 20.10 on.
+// `createRequire` works on every version we support.
+const pkg = createRequire(import.meta.url)('./package.json');
 
 const COMMON_PLUGINS = [
   resolve(),
@@ -71,7 +77,7 @@ export default [
         sourcemap: true,
         preserveModules: true,
         preserveModulesRoot: 'src',
-        entryFileNames,
+        entryFileNames
       },
       {
         dir: pkg.main,
