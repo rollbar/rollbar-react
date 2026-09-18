@@ -20,6 +20,8 @@
   ],
   "scripts": {
     "test": "jest",
+    "test:examples": "ts-node scripts/foreach-example.ts npm run --if-present test:ci",
+    "test:all": "npm run test && npm run test:examples",
     "lint": "eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx",
     "lint:examples": "ts-node scripts/foreach-example.ts npx eslint . --ext .js,.jsx,.mjs,.cjs,.ts,.tsx",
     "lint:all": "npm run lint && npm run lint:examples",
