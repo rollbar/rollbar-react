@@ -10,7 +10,8 @@ built with [Vite](https://vite.dev/). The interactive playground demonstrates:
 - privacy-aware Session Replay, triggered manually or by an error
 
 Session Replay uses the replay-enabled Rollbar.js bundle from `rollbar/replay`.
-It requires a `.env` file to be set with a `VITE_PUBLIC_ROLLBAR_TOKEN` variable:
+It requires a `.env.local` file to be set with a
+`VITE_PUBLIC_ROLLBAR_TOKEN` variable:
 
 ```sh
 VITE_PUBLIC_ROLLBAR_TOKEN=POST_CLIENT_ITEM_ACCESS_TOKEN

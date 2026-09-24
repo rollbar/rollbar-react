@@ -297,7 +297,7 @@ function deliveryCallback({
   successMessage,
 }) {
   return (error, response) => {
-    if (error || !response || response.err) {
+    if (!deliverySucceeded(error, response)) {
       onFailure({
         state: 'error',
         message: failureMessage,
@@ -310,6 +310,10 @@ function deliveryCallback({
       message: successMessage,
     });
   };
+}
+
+function deliverySucceeded(error, response) {
+  return !error && Boolean(response) && !response.err;
 }
 
 function MessageDemo({ onActivity }) {
@@ -642,13 +646,17 @@ function ErrorBoundaryDemo({ onActivity }) {
             route: '/error-boundary',
             customerImpact: 'contained',
           }}
-          callback={() =>
+          callback={(error, response) => {
+            if (!deliverySucceeded(error, response)) {
+              return;
+            }
+
             onActivity({
               kind: 'critical',
               title: 'Boundary error sent',
               detail: 'The demo recovered without leaving the page',
-            })
-          }
+            });
+          }}
         >
           <BoundaryTrigger />
         </ErrorBoundary>
@@ -709,8 +717,8 @@ function BoundaryFallback({ error, resetError }) {
       <p className="eyebrow eyebrow-dark">Error contained</p>
       <h2>The rest of the app is still running.</h2>
       <p>
-        Rollbar received <code>{error?.message}</code>, its component stack, and
-        the replay leading up to it.
+        The boundary caught <code>{error?.message}</code> and attempted to send
+        its component stack and the replay leading up to it.
       </p>
       <button className="button button-primary" onClick={resetError}>
         Reset the demo
