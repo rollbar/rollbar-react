@@ -1,9 +1,12 @@
-import Rollbar from 'rollbar';
 import invariant from 'tiny-invariant';
 
 export function historyContext(rollbar, { formatter, filter } = {}) {
+  // Duck-typed rather than `instanceof Rollbar`: rollbar 3 has separate
+  // `import` and `require` entry points, so an app's instance can come from a
+  // different Rollbar class than the one this module sees (e.g. ESM app code
+  // with this package's CommonJS build under Node).
   invariant(
-    rollbar instanceof Rollbar,
+    typeof rollbar?.configure === 'function',
     'historyContext must have an instance of Rollbar',
   );
   invariant(

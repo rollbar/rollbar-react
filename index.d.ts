@@ -83,14 +83,14 @@ export function isValidLevel(level: LEVEL): boolean;
 
 export function historyContext(
   rollbar: Rollbar,
-  args: {
-    formatter: (location: string, action: string) => string;
-    filter: (location: string, action: string) => boolean;
+  args?: {
+    formatter?: (location: string, action: string) => string;
+    filter?: (location: string, action: string) => boolean;
   },
 ): (
   v4Location: {
     action: string;
     filter: (location: string, action: string) => boolean;
   },
-  v4action: string,
+  v4action?: string,
 ) => void;
