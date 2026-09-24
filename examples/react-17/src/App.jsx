@@ -10,7 +10,7 @@ import {
 import './App.css';
 
 const rollbarConfig = {
-  accessToken: process.env.REACT_APP_PUBLIC_ROLLBAR_TOKEN,
+  accessToken: import.meta.env.VITE_PUBLIC_ROLLBAR_TOKEN,
   hostSafeList: ['localhost:3000', 'localhost:4000'],
   captureUncaught: true,
   captureUnhandledRejections: true,
