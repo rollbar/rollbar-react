@@ -8,6 +8,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
+    sourcemap: true,
   },
   test: {
     environment: 'jsdom',
