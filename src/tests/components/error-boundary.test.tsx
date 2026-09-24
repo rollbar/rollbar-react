@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Rollbar = require('rollbar');
+import Rollbar from 'rollbar';
 import {
   ErrorBoundary,
   ErrorBoundaryProps,
