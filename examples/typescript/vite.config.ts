@@ -12,5 +12,15 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
+    alias: [
+      // Load @rollbar/react's ESM build, as `vite build` does. Otherwise Node
+      // loads its CommonJS build, which gets rollbar 3's `require` entry point
+      // while this app gets its `import` one -- two different Rollbar classes,
+      // so spying on Rollbar.prototype would miss the Provider's instance.
+      {
+        find: /^@rollbar\/react$/,
+        replacement: '@rollbar/react/dist/index.js',
+      },
+    ],
   },
 });
