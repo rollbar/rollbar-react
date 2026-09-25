@@ -14,10 +14,12 @@ export function useRollbarContext(ctx = '', isLayout = false) {
   invariant(typeof ctx === 'string', '`ctx` must be a string');
   const rollbar = useRollbar();
   (isLayout ? useLayoutEffect : useEffect)(() => {
-    const origCtx = rollbar.options.payload.context;
+    const origCtx = rollbar.options.payload?.context;
     rollbar.configure({ payload: { context: ctx } });
     return () => {
-      rollbar.configure({ payload: { context: origCtx } });
+      // configure() ignores undefined values; '' is what rollbar.js sends
+      // for an unset context anyway.
+      rollbar.configure({ payload: { context: origCtx ?? '' } });
     };
   }, [ctx]);
 }
