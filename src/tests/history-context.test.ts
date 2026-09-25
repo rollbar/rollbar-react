@@ -32,12 +32,15 @@ describe('historyContext', () => {
     const configure = jest.spyOn(rollbar, 'configure');
     const listener = historyContext(rollbar);
 
-    listener({ pathname: '/v4' } as never, 'PUSH');
+    listener({ pathname: '/v4', search: '', hash: '' }, 'PUSH');
     expect(configure).toHaveBeenLastCalledWith({
       payload: { context: '/v4' },
     });
 
-    listener({ location: { pathname: '/v5' }, action: 'PUSH' } as never);
+    listener({
+      location: { pathname: '/v5', search: '', hash: '' },
+      action: 'PUSH',
+    });
     expect(configure).toHaveBeenLastCalledWith({
       payload: { context: '/v5' },
     });

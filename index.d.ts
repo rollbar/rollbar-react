@@ -41,8 +41,9 @@ export class ErrorBoundary extends Component<
   resetError: () => void;
 }
 export class RollbarContext extends Component<{
-  children: ReactNode;
-  context?: string;
+  children?: ReactNode;
+  context: string;
+  onRender?: boolean;
 }> {}
 
 export interface ProviderProps {
@@ -81,16 +82,31 @@ export function useRollbarPerson(person: object): void;
 export function useRollbarCaptureEvent(metadata: object, level?: LEVEL): void;
 export function isValidLevel(level: LEVEL): boolean;
 
+/**
+ * The parts of a `history` location that `historyContext` passes on. Structural,
+ * so locations from history v4 and v5 both fit without depending on `history`.
+ */
+export interface HistoryLocation {
+  pathname: string;
+  search: string;
+  hash: string;
+  state?: unknown;
+  key?: string;
+}
+
+export interface HistoryContextOptions {
+  formatter?(location: HistoryLocation, action: string): string;
+  filter?(location: HistoryLocation, action: string): boolean;
+}
+
+export interface HistoryContextListener {
+  /** history v4: `history.listen((location, action) => ...)` */
+  (location: HistoryLocation, action: string): void;
+  /** history v5: `history.listen(({ location, action }) => ...)` */
+  (update: { location: HistoryLocation; action: string }): void;
+}
+
 export function historyContext(
   rollbar: Rollbar,
-  args?: {
-    formatter?: (location: string, action: string) => string;
-    filter?: (location: string, action: string) => boolean;
-  },
-): (
-  v4Location: {
-    action: string;
-    filter: (location: string, action: string) => boolean;
-  },
-  v4action?: string,
-) => void;
+  options?: HistoryContextOptions,
+): HistoryContextListener;
