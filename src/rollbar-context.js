@@ -3,6 +3,12 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Context, getRollbarFromContext } from './provider';
+import {
+  nextContextOrder,
+  removeContext,
+  setContext,
+  setRenderContext,
+} from './context-stack';
 
 export class RollbarContext extends Component {
   static propTypes = {
@@ -17,48 +23,42 @@ export class RollbarContext extends Component {
 
   static contextType = Context;
 
-  firstRender = true;
+  // Where this component sits among nested contexts; see context-stack.js.
+  order = nextContextOrder();
+  active = false;
 
-  constructor(props) {
-    super(props);
-    this.state = { previousContext: null };
-  }
-
-  changeContext = (storePrevious = true) => {
-    const rollbar = getRollbarFromContext(this.context);
-    const { context } = this.props;
-    if (storePrevious) {
-      this.setState({ previousContext: rollbar.options.payload.context });
-    }
-    rollbar.configure({ payload: { context } });
+  changeContext = () => {
+    this.active = true;
+    setContext(
+      getRollbarFromContext(this.context),
+      this.order,
+      this.props.context,
+    );
   };
 
   componentDidMount() {
-    const { onRender } = this.props;
-    if (!onRender) {
-      this.changeContext(true);
-    }
+    this.changeContext();
   }
 
-  componentDidUpdate() {
-    const { onRender } = this.props;
-    if (!onRender) {
-      this.changeContext(false);
+  componentDidUpdate(prevProps) {
+    const { onRender, context } = this.props;
+    if (!onRender || context !== prevProps.context) {
+      this.changeContext();
     }
   }
 
   componentWillUnmount() {
-    const rollbar = getRollbarFromContext(this.context);
-    const { previousContext } = this.state;
-    rollbar.configure({ payload: { context: previousContext } });
+    removeContext(getRollbarFromContext(this.context), this.order);
+    this.active = false;
   }
 
   render() {
-    const { onRender } = this.props;
-    if (onRender && this.firstRender) {
-      this.changeContext(true);
+    const { onRender, context } = this.props;
+    if (onRender && !this.active) {
+      // Before the children render, so that errors they throw are reported
+      // with this context. The component is added to the stack on mount.
+      setRenderContext(getRollbarFromContext(this.context), context);
     }
-    this.firstRender = false;
     return this.props.children;
   }
 }
