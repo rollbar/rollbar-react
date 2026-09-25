@@ -5,7 +5,7 @@ import {
   ReactNode,
   ComponentType,
 } from 'react';
-import Rollbar, { Callback, Configuration } from 'rollbar';
+import Rollbar from 'rollbar';
 
 export const LEVEL_DEBUG = 'debug';
 export const LEVEL_INFO = 'info';
@@ -26,7 +26,7 @@ export interface ErrorBoundaryProps {
   errorMessage?: string | (() => string);
   extra?: Extra | ((error: Error, errorInfo: ErrorInfo) => Extra);
   level?: LEVEL | (() => LEVEL);
-  callback?: Callback;
+  callback?: Rollbar.Callback;
 }
 
 interface ErrorBoundaryState {
@@ -46,15 +46,15 @@ export class RollbarContext extends Component<{
 }> {}
 
 export interface ProviderProps {
-  Rollbar?: new (options: Configuration) => Rollbar;
+  Rollbar?: new (options: Rollbar.Configuration) => Rollbar;
   children: ReactNode;
-  config?: Configuration | (() => Configuration);
+  config?: Rollbar.Configuration | (() => Rollbar.Configuration);
   instance?: Rollbar;
 }
 
 interface ProviderState {
   rollbar: Rollbar;
-  options: Configuration;
+  options: Rollbar.Configuration;
 }
 
 export class Provider extends Component<ProviderProps, ProviderState> {}
@@ -65,8 +65,8 @@ declare const RollbarCtor: unique symbol;
 
 interface ContextInterface {
   [RollbarInstance]: Rollbar;
-  [BaseOptions]: Configuration;
-  [RollbarCtor]: new (options: Configuration) => Rollbar;
+  [BaseOptions]: Rollbar.Configuration;
+  [RollbarCtor]: new (options: Rollbar.Configuration) => Rollbar;
 }
 
 export const Context: ReactContext<ContextInterface>;
@@ -83,14 +83,14 @@ export function isValidLevel(level: LEVEL): boolean;
 
 export function historyContext(
   rollbar: Rollbar,
-  args: {
-    formatter: (location: string, action: string) => string;
-    filter: (location: string, action: string) => boolean;
+  args?: {
+    formatter?: (location: string, action: string) => string;
+    filter?: (location: string, action: string) => boolean;
   },
 ): (
   v4Location: {
     action: string;
     filter: (location: string, action: string) => boolean;
   },
-  v4action: string,
+  v4action?: string,
 ) => void;

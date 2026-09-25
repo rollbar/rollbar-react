@@ -7,8 +7,13 @@ export default defineConfig({
     // Matches `hostSafeList` in src/App.jsx.
     port: 3000,
   },
+  preview: {
+    // `vite preview` does not inherit `server.port`.
+    port: 3000,
+  },
   build: {
     outDir: 'build',
+    sourcemap: true,
   },
   test: {
     environment: 'jsdom',

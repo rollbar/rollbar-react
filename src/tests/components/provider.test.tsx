@@ -1,6 +1,6 @@
 import React, { Context as ReactContext, ReactNode } from 'react';
 import { waitFor, screen } from '@testing-library/react';
-import Rollbar = require('rollbar');
+import Rollbar from 'rollbar';
 import {
   Context,
   ContextInterface,

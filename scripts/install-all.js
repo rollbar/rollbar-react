@@ -22,6 +22,21 @@ const dirs = fs
 
 for (const dir of dirs) {
   console.log(`\x1b[32m\n---\nInstall (${npmInstall}) \x1b[1m${dir}\x1b[0m`);
-  execSync('npx yalc add @rollbar/react', { stdio: 'inherit', cwd: dir });
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(dir, 'package.json'), 'utf8'),
+  );
+  const rollbarReactVersion = packageJson.dependencies?.['@rollbar/react'];
+  const usesYalcDependency = rollbarReactVersion?.startsWith('file:.yalc/');
+
+  if (usesYalcDependency) {
+    execSync('npx yalc add @rollbar/react', { stdio: 'inherit', cwd: dir });
+  }
+
   execSync(npmInstall, { stdio: 'inherit', cwd: dir });
+
+  if (!usesYalcDependency) {
+    // Preserve the registry-backed manifest and lockfile used by standalone
+    // installs, then overlay the locally built package for repository checks.
+    execSync('npx yalc link @rollbar/react', { stdio: 'inherit', cwd: dir });
+  }
 }
