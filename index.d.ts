@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<
   resetError: () => void;
 }
 export class RollbarContext extends Component<{
-  children: ReactNode;
+  children?: ReactNode;
   context: string;
   onRender?: boolean;
 }> {}
