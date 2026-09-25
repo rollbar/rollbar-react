@@ -17,48 +17,50 @@ export class RollbarContext extends Component {
 
   static contextType = Context;
 
-  firstRender = true;
+  // The context in effect before this component set its own, restored on
+  // unmount. Kept on the instance rather than in state because with onRender
+  // it is captured during render, where setState isn't allowed.
+  previousContext = undefined;
+  contextSet = false;
 
-  constructor(props) {
-    super(props);
-    this.state = { previousContext: null };
-  }
-
-  changeContext = (storePrevious = true) => {
+  changeContext = () => {
     const rollbar = getRollbarFromContext(this.context);
-    const { context } = this.props;
-    if (storePrevious) {
-      this.setState({ previousContext: rollbar.options.payload.context });
+    if (!this.contextSet) {
+      // rollbar.js has no default payload, so options.payload is undefined
+      // unless the config sets it.
+      this.previousContext = rollbar.options.payload?.context;
+      this.contextSet = true;
     }
-    rollbar.configure({ payload: { context } });
+    rollbar.configure({ payload: { context: this.props.context } });
   };
 
   componentDidMount() {
-    const { onRender } = this.props;
-    if (!onRender) {
-      this.changeContext(true);
+    // With onRender the context was already set during the first render.
+    if (!this.contextSet) {
+      this.changeContext();
     }
   }
 
-  componentDidUpdate() {
-    const { onRender } = this.props;
-    if (!onRender) {
-      this.changeContext(false);
+  componentDidUpdate(prevProps) {
+    const { onRender, context } = this.props;
+    if (!onRender || context !== prevProps.context) {
+      this.changeContext();
     }
   }
 
   componentWillUnmount() {
     const rollbar = getRollbarFromContext(this.context);
-    const { previousContext } = this.state;
-    rollbar.configure({ payload: { context: previousContext } });
+    // configure() ignores undefined values, so restoring an unset context
+    // needs ''. rollbar.js sends '' for an unset context anyway.
+    rollbar.configure({ payload: { context: this.previousContext ?? '' } });
+    this.contextSet = false;
   }
 
   render() {
     const { onRender } = this.props;
-    if (onRender && this.firstRender) {
-      this.changeContext(true);
+    if (onRender && !this.contextSet) {
+      this.changeContext();
     }
-    this.firstRender = false;
     return this.props.children;
   }
 }
