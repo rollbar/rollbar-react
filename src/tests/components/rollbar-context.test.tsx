@@ -1,5 +1,3 @@
-// Plain JS rather than TSX: `onRender` isn't in index.d.ts's RollbarContext
-// props on main (#162 adds it), and ts-jest type-checks TSX tests.
 import React from 'react';
 import { render } from '@testing-library/react';
 import Rollbar from 'rollbar';
@@ -10,17 +8,18 @@ import {
   useRollbarContext,
 } from '../rollbar-react';
 
-const makeRollbar = (config = {}) =>
+const makeRollbar = (config: Rollbar.Configuration = {}) =>
   new Rollbar({
     accessToken: 'POST_CLIENT_ITEM_TOKEN',
     enabled: false,
     ...config,
   });
 
-const contextOf = (rollbar) => rollbar.options.payload?.context;
+const contextOf = (rollbar: Rollbar): unknown =>
+  rollbar.options.payload?.context;
 
 describe('RollbarContext', () => {
-  let consoleError;
+  let consoleError: jest.SpyInstance;
 
   beforeEach(() => {
     consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -77,10 +76,13 @@ describe('RollbarContext', () => {
 
   // #88
   describe('when a child throws while rendering', () => {
-    const renderThrowing = (onRender) => {
+    const renderThrowing = (onRender: boolean) => {
       const rollbar = makeRollbar({ payload: { context: 'root' } });
-      const reported = [];
-      rollbar.error = jest.fn(() => reported.push(contextOf(rollbar)));
+      const reported: unknown[] = [];
+      rollbar.error = jest.fn(() => {
+        reported.push(contextOf(rollbar));
+        return { uuid: '' };
+      });
       const Throw = () => {
         throw new Error('render error');
       };
@@ -109,7 +111,7 @@ describe('RollbarContext', () => {
   describe('with onRender', () => {
     it('sets the context before children render', () => {
       const rollbar = makeRollbar({ payload: { context: 'root' } });
-      let seen;
+      let seen: unknown;
       const Child = () => {
         seen = contextOf(rollbar);
         return null;
@@ -142,7 +144,7 @@ describe('RollbarContext', () => {
 
     it('follows changes to the context prop', () => {
       const rollbar = makeRollbar({ payload: { context: 'root' } });
-      const ui = (context) => (
+      const ui = (context: string) => (
         <Provider instance={rollbar}>
           <RollbarContext context={context} onRender>
             <div />
