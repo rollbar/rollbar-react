@@ -21,13 +21,16 @@ export class RollbarContext extends Component {
   // Where this component sits among nested contexts; see context-stack.js.
   // Kept on the instance rather than in state because with onRender it is
   // added during render, where setState isn't allowed.
-  entry = { order: nextContextOrder(), context: undefined };
+  order = nextContextOrder();
   active = false;
 
   changeContext = () => {
-    this.entry.context = this.props.context;
     this.active = true;
-    setContext(getRollbarFromContext(this.context), this.entry);
+    setContext(
+      getRollbarFromContext(this.context),
+      this.order,
+      this.props.context,
+    );
   };
 
   componentDidMount() {
@@ -45,7 +48,7 @@ export class RollbarContext extends Component {
   }
 
   componentWillUnmount() {
-    removeContext(getRollbarFromContext(this.context), this.entry);
+    removeContext(getRollbarFromContext(this.context), this.order);
     this.active = false;
   }
 

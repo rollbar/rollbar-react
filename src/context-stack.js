@@ -16,35 +16,30 @@ export function nextContextOrder() {
 }
 
 function applyInnermost(rollbar, stack) {
-  let innermost = null;
-  for (const entry of stack.entries) {
-    if (!innermost || entry.order > innermost.order) {
-      innermost = entry;
-    }
-  }
-  rollbar.configure({ payload: { context: innermost.context } });
+  const innermost = Math.max(...stack.contexts.keys());
+  rollbar.configure({ payload: { context: stack.contexts.get(innermost) } });
 }
 
-// `entry` is `{ order, context }`, owned by the caller. Adds it, or applies
-// its new `context` if it's already there.
-export function setContext(rollbar, entry) {
+// Adds the context for `order`, or applies its new value if it's already
+// there.
+export function setContext(rollbar, order, context) {
   let stack = stacks.get(rollbar);
   if (!stack) {
     // rollbar.js has no default payload, so options.payload is undefined
     // unless the config sets it.
-    stack = { base: rollbar.options.payload?.context, entries: new Set() };
+    stack = { base: rollbar.options.payload?.context, contexts: new Map() };
     stacks.set(rollbar, stack);
   }
-  stack.entries.add(entry);
+  stack.contexts.set(order, context);
   applyInnermost(rollbar, stack);
 }
 
-export function removeContext(rollbar, entry) {
+export function removeContext(rollbar, order) {
   const stack = stacks.get(rollbar);
-  if (!stack || !stack.entries.delete(entry)) {
+  if (!stack || !stack.contexts.delete(order)) {
     return;
   }
-  if (stack.entries.size) {
+  if (stack.contexts.size) {
     applyInnermost(rollbar, stack);
     return;
   }

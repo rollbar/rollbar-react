@@ -15,11 +15,10 @@ export function useRollbarContext(ctx = '', isLayout = false) {
   invariant(typeof ctx === 'string', '`ctx` must be a string');
   const rollbar = useRollbar();
   // Where this component sits among nested contexts; see context-stack.js.
-  const [entry] = useState(() => ({ order: nextContextOrder(), context: ctx }));
+  const [order] = useState(nextContextOrder);
   const useEffectOfType = isLayout ? useLayoutEffect : useEffect;
   useEffectOfType(() => {
-    entry.context = ctx;
-    setContext(rollbar, entry);
+    setContext(rollbar, order, ctx);
   }, [ctx]);
-  useEffectOfType(() => () => removeContext(rollbar, entry), []);
+  useEffectOfType(() => () => removeContext(rollbar, order), []);
 }
