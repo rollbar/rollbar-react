@@ -95,7 +95,7 @@ export interface HistoryLocation {
 }
 
 export interface HistoryContextOptions {
-formatter?(location: HistoryLocation, action: string): string;
+  formatter?(location: HistoryLocation, action: string): string;
   filter?(location: HistoryLocation, action: string): boolean;
 }
 

@@ -12,20 +12,20 @@ import {
 
 declare const rollbar: Rollbar;
 
-// The `listen` signatures of history v4 (@types/history 4.7) and history v5
-// (bundled types), reduced to the parts historyContext has to fit.
+// The `Location`/`Action` types and `listen` signatures of history v4
+// (@types/history 4.7) and history v5 (bundled types), reduced to the parts
+// historyContext has to fit.
+interface V4Location {
+  pathname: string;
+  search: string;
+  hash: string;
+  state: unknown;
+  key?: string;
+}
+type V4Action = 'PUSH' | 'POP' | 'REPLACE';
 declare const historyV4: {
   listen(
-    listener: (
-      location: {
-        pathname: string;
-        search: string;
-        hash: string;
-        state: unknown;
-        key?: string;
-      },
-      action: 'PUSH' | 'POP' | 'REPLACE',
-    ) => void,
+    listener: (location: V4Location, action: V4Action) => void,
   ): () => void;
 };
 declare enum V5Action {
@@ -33,18 +33,16 @@ declare enum V5Action {
   Push = 'PUSH',
   Replace = 'REPLACE',
 }
+interface V5Location {
+  pathname: string;
+  search: string;
+  hash: string;
+  state: unknown;
+  key: string;
+}
 declare const historyV5: {
   listen(
-    listener: (update: {
-      action: V5Action;
-      location: {
-        pathname: string;
-        search: string;
-        hash: string;
-        state: unknown;
-        key: string;
-      };
-    }) => void,
+    listener: (update: { action: V5Action; location: V5Location }) => void,
   ): () => void;
 };
 
@@ -59,6 +57,19 @@ const listener: HistoryContextListener = historyContext(rollbar, {
 });
 historyV4.listen(listener);
 historyV5.listen(listener);
+
+// formatter and filter accept callbacks annotated with history's own types,
+// since the runtime passes history's location and action through unchanged.
+historyContext(rollbar, {
+  formatter: (location: V4Location, action: V4Action) =>
+    `${action} ${location.pathname}`,
+  filter: (location: V4Location, action: V4Action) => action !== 'REPLACE',
+});
+historyContext(rollbar, {
+  formatter: (location: V5Location, action: V5Action) =>
+    `${action} ${location.key}`,
+  filter: (location: V5Location, action: V5Action) => action !== V5Action.Pop,
+});
 
 // @ts-expect-error formatter must return a string
 historyContext(rollbar, { formatter: (location) => location });
