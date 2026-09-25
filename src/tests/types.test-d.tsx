@@ -82,12 +82,13 @@ export const withElement = (
   </ErrorBoundary>
 );
 
-// RollbarContext: context is required, onRender is optional.
+// RollbarContext: context is required, onRender and children are optional.
 export const withContext = (
   <RollbarContext context="/page" onRender>
     <div />
   </RollbarContext>
 );
+export const withoutChildren = <RollbarContext context="/page" />;
 export const withoutContext = (
   // @ts-expect-error context is required
   <RollbarContext>

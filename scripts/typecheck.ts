@@ -26,8 +26,10 @@ if (!parsed) {
 const { options, fileNames, errors } = parsed;
 
 const program = ts.createProgram({ rootNames: fileNames, options });
+// TypeScript stores file names with forward slashes on every platform, so
+// don't split on path.sep: on Windows that would filter out nothing.
 const diagnostics = [...errors, ...ts.getPreEmitDiagnostics(program)].filter(
-  (d) => !d.file || !d.file.fileName.split(path.sep).includes('node_modules'),
+  (d) => !d.file || !d.file.fileName.split('/').includes('node_modules'),
 );
 
 if (diagnostics.length) {
