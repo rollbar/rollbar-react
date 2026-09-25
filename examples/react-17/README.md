@@ -1,8 +1,17 @@
 # Rollbar - React 17 example
 
 This project shows an example of how to add Rollbar to a React 17 application
-built with [Vite](https://vite.dev/).
-It requires a `.env` file to be set with a `VITE_PUBLIC_ROLLBAR_TOKEN` variable:
+built with [Vite](https://vite.dev/). The interactive playground demonstrates:
+
+- informational messages
+- captured errors with stack traces
+- occurrences enriched with custom data
+- React ErrorBoundary reporting and recovery
+- privacy-aware Session Replay, triggered manually or by an error
+
+Session Replay uses the replay-enabled Rollbar.js bundle from `rollbar/replay`.
+It requires a `.env.local` file to be set with a
+`VITE_PUBLIC_ROLLBAR_TOKEN` variable:
 
 ```sh
 VITE_PUBLIC_ROLLBAR_TOKEN=POST_CLIENT_ITEM_ACCESS_TOKEN
