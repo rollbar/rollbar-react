@@ -1,8 +1,9 @@
 'use client';
 
 import invariant from 'tiny-invariant';
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRollbar } from './use-rollbar';
+import { nextContextOrder, removeContext, setContext } from '../context-stack';
 
 // Simple version does its job
 // export function useRollbarContext(context) {
@@ -13,13 +14,12 @@ import { useRollbar } from './use-rollbar';
 export function useRollbarContext(ctx = '', isLayout = false) {
   invariant(typeof ctx === 'string', '`ctx` must be a string');
   const rollbar = useRollbar();
-  (isLayout ? useLayoutEffect : useEffect)(() => {
-    const origCtx = rollbar.options.payload?.context;
-    rollbar.configure({ payload: { context: ctx } });
-    return () => {
-      // configure() ignores undefined values; '' is what rollbar.js sends
-      // for an unset context anyway.
-      rollbar.configure({ payload: { context: origCtx ?? '' } });
-    };
+  // Where this component sits among nested contexts; see context-stack.js.
+  const [entry] = useState(() => ({ order: nextContextOrder(), context: ctx }));
+  const useEffectOfType = isLayout ? useLayoutEffect : useEffect;
+  useEffectOfType(() => {
+    entry.context = ctx;
+    setContext(rollbar, entry);
   }, [ctx]);
+  useEffectOfType(() => () => removeContext(rollbar, entry), []);
 }

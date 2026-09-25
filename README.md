@@ -396,6 +396,9 @@ Add the `onRender` prop to set the context during the first render instead, befo
 
 Either way, a change to the `context` prop is applied, and the previous context is restored on unmount.
 
+`RollbarContext` components can be nested, including with the `useRollbarContext` hook. The innermost one that's
+mounted sets the context. When it unmounts, the next one out applies again, with its current `context`.
+
 `onRender` sets the context from inside `render`. If React throws that render away without committing it, for
 example during a transition that gets interrupted, nothing restores the previous context, so the context can stay
 set to a page that never showed. That's why it isn't the default.

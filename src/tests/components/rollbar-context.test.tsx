@@ -159,20 +159,88 @@ describe('RollbarContext', () => {
       unmount();
       expect(contextOf(rollbar)).toBe('root');
     });
+  });
+});
 
-    it('keeps the innermost context when nested', () => {
-      const rollbar = makeRollbar({ payload: { context: 'root' } });
-      render(
-        <Provider instance={rollbar}>
-          <RollbarContext context="outer" onRender>
-            <RollbarContext context="inner" onRender>
+describe('nested contexts', () => {
+  type NestedProps = { outer: string; inner: string; showInner: boolean };
+
+  const HookInner = ({ context }: { context: string }) => {
+    useRollbarContext(context);
+    return null;
+  };
+  const HookOuter = ({ outer, inner, showInner }: NestedProps) => {
+    useRollbarContext(outer);
+    return showInner ? <HookInner context={inner} /> : null;
+  };
+
+  const modes: [string, React.ComponentType<NestedProps>][] = [
+    [
+      'RollbarContext',
+      ({ outer, inner, showInner }) => (
+        <RollbarContext context={outer}>
+          {showInner && (
+            <RollbarContext context={inner}>
               <div />
             </RollbarContext>
-          </RollbarContext>
-        </Provider>,
-      );
-      expect(contextOf(rollbar)).toBe('inner');
-    });
+          )}
+        </RollbarContext>
+      ),
+    ],
+    [
+      'RollbarContext with onRender',
+      ({ outer, inner, showInner }) => (
+        <RollbarContext context={outer} onRender>
+          {showInner && (
+            <RollbarContext context={inner} onRender>
+              <div />
+            </RollbarContext>
+          )}
+        </RollbarContext>
+      ),
+    ],
+    ['useRollbarContext', HookOuter],
+    [
+      'useRollbarContext inside RollbarContext',
+      ({ outer, inner, showInner }) => (
+        <RollbarContext context={outer}>
+          {showInner && <HookInner context={inner} />}
+        </RollbarContext>
+      ),
+    ],
+  ];
+
+  it.each(modes)('%s: the innermost context wins', (_, Nested) => {
+    const rollbar = makeRollbar({ payload: { context: 'root' } });
+    const ui = (props: NestedProps) => (
+      <Provider instance={rollbar}>
+        <Nested {...props} />
+      </Provider>
+    );
+
+    // React mounts children before their parents.
+    const { rerender, unmount } = render(
+      ui({ outer: 'outer', inner: 'inner', showInner: true }),
+    );
+    expect(contextOf(rollbar)).toBe('inner');
+
+    // The outer context changes while the inner one is still mounted.
+    rerender(ui({ outer: 'outer2', inner: 'inner', showInner: true }));
+    expect(contextOf(rollbar)).toBe('inner');
+
+    rerender(ui({ outer: 'outer2', inner: 'inner2', showInner: true }));
+    expect(contextOf(rollbar)).toBe('inner2');
+
+    // The outer context's current value, not the one it had when the inner
+    // one mounted.
+    rerender(ui({ outer: 'outer2', inner: 'inner2', showInner: false }));
+    expect(contextOf(rollbar)).toBe('outer2');
+
+    rerender(ui({ outer: 'outer2', inner: 'inner3', showInner: true }));
+    expect(contextOf(rollbar)).toBe('inner3');
+
+    unmount();
+    expect(contextOf(rollbar)).toBe('root');
   });
 });
 
