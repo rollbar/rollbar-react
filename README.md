@@ -408,6 +408,10 @@ server. So once React has finished, and an `ErrorBoundary` has reported the erro
 context of whatever is mounted. Until then, anything else sent to [Rollbar] also gets this context. That's why
 `onRender` isn't the default.
 
+On the server, give the `Provider` a `config` rather than a shared `instance`. If the instance's config doesn't
+set `payload.context`, `RollbarContext` can only put back an empty context, and on the server that replaces the
+context rollbar.js takes from the request's route for later errors.
+
 #### Using with React Router
 
 It's useful to set the `context` in [Rollbar] associated with areas of your application. On the server it's usually

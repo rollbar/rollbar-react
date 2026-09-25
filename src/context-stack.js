@@ -33,8 +33,12 @@ function applyStack(rollbar, stack) {
     return;
   }
   stacks.delete(rollbar);
-  // configure() ignores undefined values, so restoring an unset context
-  // needs ''. rollbar.js sends '' for an unset context anyway.
+  // configure() ignores undefined values and there's no way to remove the key,
+  // so restoring an unset context needs ''. In the browser that's sent the same
+  // as an unset context. On the server it isn't: rollbar.js takes the context
+  // from the request's route, and payload.context, even '', replaces it. Only
+  // onRender restores on the server, since nothing mounts there; the README
+  // covers this.
   rollbar.configure({ payload: { context: stack.base ?? '' } });
 }
 
