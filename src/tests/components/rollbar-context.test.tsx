@@ -1,4 +1,5 @@
 import React from 'react';
+import { renderToString } from 'react-dom/server';
 import { render } from '@testing-library/react';
 import Rollbar from 'rollbar';
 import {
@@ -17,6 +18,13 @@ const makeRollbar = (config: Rollbar.Configuration = {}) =>
 
 const contextOf = (rollbar: Rollbar): unknown =>
   rollbar.options.payload?.context;
+
+// With onRender, RollbarContext puts back the context of whatever is mounted
+// in a microtask after rendering.
+const afterMicrotasks = () =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
 
 describe('RollbarContext', () => {
   let consoleError: jest.SpyInstance;
@@ -76,18 +84,25 @@ describe('RollbarContext', () => {
 
   // #88
   describe('when a child throws while rendering', () => {
-    const renderThrowing = (onRender: boolean) => {
+    const makeReporting = () => {
       const rollbar = makeRollbar({ payload: { context: 'root' } });
       const reported: unknown[] = [];
       rollbar.error = jest.fn(() => {
         reported.push(contextOf(rollbar));
         return { uuid: '' };
       });
-      const Throw = () => {
+      return { rollbar, reported };
+    };
+    const Throw = ({ when = true }: { when?: boolean }) => {
+      if (when) {
         throw new Error('render error');
-      };
+      }
+      return null;
+    };
+    const renderThrowing = (onRender: boolean) => {
+      const reporting = makeReporting();
       render(
-        <Provider instance={rollbar}>
+        <Provider instance={reporting.rollbar}>
           <ErrorBoundary>
             <RollbarContext context="home" onRender={onRender}>
               <Throw />
@@ -95,16 +110,74 @@ describe('RollbarContext', () => {
           </ErrorBoundary>
         </Provider>,
       );
-      expect(rollbar.error).toHaveBeenCalledTimes(1);
-      return reported[0];
+      return reporting;
     };
 
     it('reports with the previous context by default', () => {
-      expect(renderThrowing(false)).toBe('root');
+      expect(renderThrowing(false).reported).toEqual(['root']);
     });
 
-    it('reports with this context when onRender is set', () => {
-      expect(renderThrowing(true)).toBe('home');
+    it('reports with this context when onRender is set', async () => {
+      const { rollbar, reported } = renderThrowing(true);
+      expect(reported).toEqual(['home']);
+
+      // The ErrorBoundary replaced the RollbarContext before it mounted.
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('root');
+    });
+
+    it('leaves nothing behind when the ErrorBoundary replaces an onRender context', async () => {
+      const { rollbar, reported } = makeReporting();
+      const ui = (
+        outer: string,
+        page: 'throws' | 'renders' | 'none',
+        boundaryKey: number,
+      ) => (
+        <Provider instance={rollbar}>
+          <RollbarContext context={outer}>
+            <ErrorBoundary key={boundaryKey}>
+              {page !== 'none' && (
+                <RollbarContext context="home" onRender>
+                  <Throw when={page === 'throws'} />
+                </RollbarContext>
+              )}
+            </ErrorBoundary>
+          </RollbarContext>
+        </Provider>
+      );
+
+      const { rerender } = render(ui('app', 'throws', 1));
+      expect(reported).toEqual(['home']);
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('app');
+
+      rerender(ui('app2', 'throws', 1));
+      expect(contextOf(rollbar)).toBe('app2');
+
+      // A new ErrorBoundary, and this time the page renders.
+      rerender(ui('app2', 'renders', 2));
+      expect(contextOf(rollbar)).toBe('home');
+
+      rerender(ui('app2', 'none', 2));
+      expect(contextOf(rollbar)).toBe('app2');
+    });
+
+    it('reports with this context from outside the ErrorBoundary, on first render and after', () => {
+      const { rollbar, reported } = makeReporting();
+      const ui = (throws: boolean, boundaryKey: number) => (
+        <Provider instance={rollbar}>
+          <RollbarContext context="home" onRender>
+            <ErrorBoundary key={boundaryKey}>
+              <Throw when={throws} />
+            </ErrorBoundary>
+          </RollbarContext>
+        </Provider>
+      );
+
+      const { rerender } = render(ui(true, 1));
+      rerender(ui(false, 2));
+      rerender(ui(true, 2));
+      expect(reported).toEqual(['home', 'home']);
     });
   });
 
@@ -127,6 +200,28 @@ describe('RollbarContext', () => {
       expect(seen).toBe('home');
 
       unmount();
+      expect(contextOf(rollbar)).toBe('root');
+    });
+
+    it('puts the context back after rendering on the server', async () => {
+      const rollbar = makeRollbar({ payload: { context: 'root' } });
+      let seen: unknown;
+      const Child = () => {
+        seen = contextOf(rollbar);
+        return null;
+      };
+
+      renderToString(
+        <Provider instance={rollbar}>
+          <RollbarContext context="home" onRender>
+            <Child />
+          </RollbarContext>
+        </Provider>,
+      );
+      expect(seen).toBe('home');
+
+      // Nothing mounts on the server.
+      await afterMicrotasks();
       expect(contextOf(rollbar)).toBe('root');
     });
 

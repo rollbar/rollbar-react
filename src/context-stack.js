@@ -1,7 +1,7 @@
-// The RollbarContext components and useRollbarContext hooks that are
-// currently setting a context, per Rollbar client. The innermost one decides
-// the client's context. When the last one goes away, the context from before
-// the first one is restored.
+// The RollbarContext components and useRollbarContext hooks that are mounted
+// and setting a context, per Rollbar client. The innermost one decides the
+// client's context. When the last one goes away, the context from before the
+// first one is restored.
 const stacks = new WeakMap();
 
 let lastOrder = 0;
@@ -15,14 +15,7 @@ export function nextContextOrder() {
   return lastOrder;
 }
 
-function applyInnermost(rollbar, stack) {
-  const innermost = Math.max(...stack.contexts.keys());
-  rollbar.configure({ payload: { context: stack.contexts.get(innermost) } });
-}
-
-// Adds the context for `order`, or applies its new value if it's already
-// there.
-export function setContext(rollbar, order, context) {
+function getStack(rollbar) {
   let stack = stacks.get(rollbar);
   if (!stack) {
     // rollbar.js has no default payload, so options.payload is undefined
@@ -30,21 +23,54 @@ export function setContext(rollbar, order, context) {
     stack = { base: rollbar.options.payload?.context, contexts: new Map() };
     stacks.set(rollbar, stack);
   }
-  stack.contexts.set(order, context);
-  applyInnermost(rollbar, stack);
+  return stack;
 }
 
-export function removeContext(rollbar, order) {
-  const stack = stacks.get(rollbar);
-  if (!stack || !stack.contexts.delete(order)) {
-    return;
-  }
+function applyStack(rollbar, stack) {
   if (stack.contexts.size) {
-    applyInnermost(rollbar, stack);
+    const innermost = Math.max(...stack.contexts.keys());
+    rollbar.configure({ payload: { context: stack.contexts.get(innermost) } });
     return;
   }
   stacks.delete(rollbar);
   // configure() ignores undefined values, so restoring an unset context
   // needs ''. rollbar.js sends '' for an unset context anyway.
   rollbar.configure({ payload: { context: stack.base ?? '' } });
+}
+
+// Adds the context for `order`, or applies its new value if it's already
+// there.
+export function setContext(rollbar, order, context) {
+  const stack = getStack(rollbar);
+  stack.contexts.set(order, context);
+  applyStack(rollbar, stack);
+}
+
+export function removeContext(rollbar, order) {
+  const stack = stacks.get(rollbar);
+  if (stack?.contexts.delete(order)) {
+    applyStack(rollbar, stack);
+  }
+}
+
+// For RollbarContext's onRender: sets `context` while the component renders,
+// before it has mounted and been added with setContext. React can throw that
+// render away without mounting anything, for example when an ErrorBoundary
+// around the component catches an error from its children, and nothing mounts
+// on the server. So a microtask applies the context of whatever is mounted
+// again. React commits in the same task that it finishes rendering in, and an
+// ErrorBoundary reports during the commit, so the microtask runs after both.
+// If a transition yields partway through rendering, the microtask runs then,
+// but when a child throws, React renders again from the start, synchronously,
+// before it commits.
+export function setRenderContext(rollbar, context) {
+  // Taken before the context changes, so that it's the one restored if
+  // nothing is mounted.
+  const stack = getStack(rollbar);
+  rollbar.configure({ payload: { context } });
+  Promise.resolve().then(() => {
+    if (stacks.get(rollbar) === stack) {
+      applyStack(rollbar, stack);
+    }
+  });
 }

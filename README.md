@@ -48,7 +48,7 @@ next month.
     - [Pass a Fallback UI](#pass-a-fallback-ui)
   - [`RollbarContext` Component](#rollbarcontext-component)
     - [Basic Usage](#basic-usage)
-    - [Setting the context before children render](#setting-the-context-before-children-render)
+    - [Using with `ErrorBoundary`](#using-with-errorboundary)
     - [Using with React Router](#using-with-react-router)
 - [Functions](#functions)
   - [`historyContext` to create `history.listener`](#historycontext-to-create-historylistener)
@@ -359,8 +359,7 @@ Use the `RollbarContext` component to declaratively set the `context` value used
 messages to [Rollbar].
 
 The context applies to any log or message sent to [Rollbar] while the `RollbarContext` is mounted on the tree. For
-errors that your `ErrorBoundary` from above catches while the children are first rendering, see
-[Setting the context before children render](#setting-the-context-before-children-render).
+errors that your `ErrorBoundary` from above catches, see [Using with `ErrorBoundary`](#using-with-errorboundary).
 
 Like `ErrorBoundary` above, `RollbarContext` relies on a [`Provider`] for an instance of a [Rollbar.js] client.
 
@@ -378,30 +377,36 @@ function HomePage() {
 }
 ```
 
-#### Setting the context before children render
-
-By default `RollbarContext` sets the context when it mounts, which React does after the children have rendered and
-mounted. An error thrown while they're first rendering, which is what an `ErrorBoundary` usually catches, is
-therefore reported with the previous context.
-
-Add the `onRender` prop to set the context during the first render instead, before the children render:
-
-```javascript
-<ErrorBoundary>
-  <RollbarContext context="home" onRender>
-    <HomePage />
-  </RollbarContext>
-</ErrorBoundary>
-```
-
-Either way, a change to the `context` prop is applied, and the previous context is restored on unmount.
+A change to the `context` prop is applied, and the previous context is restored on unmount.
 
 `RollbarContext` components can be nested, including with the `useRollbarContext` hook. The innermost one that's
 mounted sets the context. When it unmounts, the next one out applies again, with its current `context`.
 
-`onRender` sets the context from inside `render`. If React throws that render away without committing it, for
-example during a transition that gets interrupted, nothing restores the previous context, so the context can stay
-set to a page that never showed. That's why it isn't the default.
+#### Using with `ErrorBoundary`
+
+Put the `RollbarContext` outside the `ErrorBoundary`, and add the `onRender` prop:
+
+```javascript
+<RollbarContext context="home" onRender>
+  <ErrorBoundary>
+    <HomePage />
+  </ErrorBoundary>
+</RollbarContext>
+```
+
+Outside, because when the `ErrorBoundary` catches an error, React removes everything inside it before the error is
+reported. A `RollbarContext` inside it has already been removed by then, so an error thrown after the first render
+is reported with the previous context.
+
+`onRender`, because by default `RollbarContext` sets the context when it mounts, which React does after the children
+have rendered and mounted. An error thrown while they're first rendering would be reported with the previous
+context. With `onRender`, `RollbarContext` sets the context during its first render, before the children render.
+
+That means the context is set before React has committed anything. React can throw the render away, for example
+when an `ErrorBoundary` around the `RollbarContext` catches an error, and nothing mounts when rendering on the
+server. So once React has finished, and an `ErrorBoundary` has reported the error, `RollbarContext` puts back the
+context of whatever is mounted. Until then, anything else sent to [Rollbar] also gets this context. That's why
+`onRender` isn't the default.
 
 #### Using with React Router
 

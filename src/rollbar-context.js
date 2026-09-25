@@ -3,7 +3,12 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Context, getRollbarFromContext } from './provider';
-import { nextContextOrder, removeContext, setContext } from './context-stack';
+import {
+  nextContextOrder,
+  removeContext,
+  setContext,
+  setRenderContext,
+} from './context-stack';
 
 export class RollbarContext extends Component {
   static propTypes = {
@@ -19,8 +24,6 @@ export class RollbarContext extends Component {
   static contextType = Context;
 
   // Where this component sits among nested contexts; see context-stack.js.
-  // Kept on the instance rather than in state because with onRender it is
-  // added during render, where setState isn't allowed.
   order = nextContextOrder();
   active = false;
 
@@ -34,10 +37,7 @@ export class RollbarContext extends Component {
   };
 
   componentDidMount() {
-    // With onRender the context was already set during the first render.
-    if (!this.active) {
-      this.changeContext();
-    }
+    this.changeContext();
   }
 
   componentDidUpdate(prevProps) {
@@ -53,9 +53,11 @@ export class RollbarContext extends Component {
   }
 
   render() {
-    const { onRender } = this.props;
+    const { onRender, context } = this.props;
     if (onRender && !this.active) {
-      this.changeContext();
+      // Before the children render, so that errors they throw are reported
+      // with this context. The component is added to the stack on mount.
+      setRenderContext(getRollbarFromContext(this.context), context);
     }
     return this.props.children;
   }
