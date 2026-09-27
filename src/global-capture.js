@@ -37,6 +37,7 @@ function takeOver(claim, kind) {
     disable(previous, kind);
   }
   owners[kind] = claim;
+  waiting[kind] = waiting[kind].filter((other) => other !== claim);
   enable(claim, kind);
 }
 
@@ -49,6 +50,18 @@ function isAncestor(other, claim) {
   return false;
 }
 
+// The outermost of `claim` and its enclosing Providers' claims that captures
+// `kind` and passes `eligible`.
+function outermost(claim, kind, eligible = () => true) {
+  let found = claim;
+  for (let parent = claim.parent; parent; parent = parent.parent) {
+    if (parent.captures[kind] && eligible(parent)) {
+      found = parent;
+    }
+  }
+  return found;
+}
+
 // Call before constructing the instance, with the claim of the nearest
 // enclosing Provider, if any. Returns the options to construct it with (global
 // capture turned off where another instance already owns it) and a claim to
@@ -58,7 +71,13 @@ export function claimGlobalCapture(options, parent = null) {
     return { options, claim: null };
   }
 
-  const claim = { rollbar: null, state: 'pending', captures: {}, parent };
+  const claim = {
+    rollbar: null,
+    state: 'pending',
+    captures: {},
+    replaced: {},
+    parent,
+  };
   let ctorOptions = options;
 
   KINDS.forEach((kind) => {
@@ -77,10 +96,12 @@ export function claimGlobalCapture(options, parent = null) {
     const owner = owners[kind];
     if (!owner) {
       owners[kind] = claim;
+      claim.replaced[kind] = null;
     } else if (owner.state === 'unmounted') {
       // Its handler is still installed, so it has to be switched off.
       disable(owner, kind);
       owners[kind] = claim;
+      claim.replaced[kind] = owner;
     } else {
       ctorOptions = { ...ctorOptions, ...captureOff(kind) };
     }
@@ -107,14 +128,20 @@ export function mountGlobalCapture(claim) {
     // ones, so of the Providers rendered in this commit only an ancestor mounts
     // after this one, and it keeps capture. Any other owner still pending was
     // rendered in a pass React threw away (or hasn't committed), so it is
-    // replaced like an unmounted one.
+    // replaced like an unmounted one: by the outermost enclosing Provider
+    // that captures this kind, which is mounting in this same commit.
     if (
       !owner ||
       owner.state === 'unmounted' ||
       (owner.state === 'pending' && !isAncestor(owner, claim))
     ) {
-      takeOver(claim, kind);
-    } else if (!waiting[kind].includes(claim)) {
+      const next = outermost(claim, kind);
+      takeOver(next, kind);
+      if (next === claim) {
+        return;
+      }
+    }
+    if (!waiting[kind].includes(claim)) {
       waiting[kind].push(claim);
     }
   });
@@ -131,11 +158,39 @@ export function unmountGlobalCapture(claim) {
     if (owners[kind] !== claim) {
       return;
     }
-    const next = waiting[kind].shift();
+    // Providers nested inside this one unmount with it (or, under StrictMode
+    // and Suspense, disappear and reappear with it), so they are skipped. Of
+    // the rest, the first to mount goes to its outermost enclosing Provider
+    // that is also waiting, so nested Providers keep capture with the outer one.
+    const next = waiting[kind].find((other) => !isAncestor(claim, other));
     if (next) {
-      takeOver(next, kind);
+      takeOver(
+        outermost(next, kind, (parent) => waiting[kind].includes(parent)),
+        kind,
+      );
     }
     // With nobody waiting, the owner keeps capturing, as an unmounted
-    // Provider's instance always has. The next Provider to claim takes over.
+    // Provider's instance always has. The next Provider to claim or mount
+    // takes over.
+  });
+}
+
+// Call instead of the others when constructing the instance fails, to give
+// capture back to whichever owner the claim replaced.
+export function abandonGlobalCapture(claim) {
+  if (!claim) {
+    return;
+  }
+  claim.state = 'unmounted';
+
+  Object.keys(claim.replaced).forEach((kind) => {
+    if (owners[kind] !== claim) {
+      return;
+    }
+    const previous = claim.replaced[kind];
+    owners[kind] = previous;
+    if (previous) {
+      enable(previous, kind);
+    }
   });
 }

@@ -18,6 +18,23 @@ function makeConfig() {
   return { config, reports };
 }
 
+// A Rollbar constructor whose instances each count their own uncaught items,
+// in construction order, for Providers that share a config across renders.
+function countingRollbar() {
+  const reports: number[] = [];
+  const ctor = jest.fn((options: Rollbar.Configuration) => {
+    const index = reports.push(0) - 1;
+    return new Rollbar({
+      ...options,
+      checkIgnore: (isUncaught) => {
+        if (isUncaught) reports[index] += 1;
+        return true;
+      },
+    });
+  });
+  return { ctor, reports };
+}
+
 const settle = () => new Promise((resolve) => setTimeout(resolve, 50));
 
 async function throwUncaught() {
@@ -32,6 +49,47 @@ async function rejectUnhandled() {
     promise: Promise.resolve(),
   });
   window.dispatchEvent(event);
+  await settle();
+}
+
+// Rendering its children again after an error throws away the first attempt,
+// including any Provider inside it, which never mounts.
+class Retry extends React.Component<{ children: ReactNode }> {
+  state = { attempt: 0 };
+  static getDerivedStateFromError() {
+    return { attempt: 1 };
+  }
+  render() {
+    const { children } = this.props;
+    return <React.Fragment key={this.state.attempt}>{children}</React.Fragment>;
+  }
+}
+
+// A component that throws on its first render only.
+function throwOnce() {
+  let thrown = false;
+  return function ThrowOnce() {
+    if (!thrown) {
+      thrown = true;
+      throw new Error('first render');
+    }
+    return null;
+  };
+}
+
+// Renders without the error React reports for a render that throws.
+async function renderQuietly(ui: React.ReactElement) {
+  const consoleError = jest
+    .spyOn(console, 'error')
+    .mockImplementation(() => undefined);
+  const onError = (event: ErrorEvent) => event.preventDefault();
+  window.addEventListener('error', onError);
+  try {
+    render(ui);
+  } finally {
+    window.removeEventListener('error', onError);
+    consoleError.mockRestore();
+  }
   await settle();
 }
 
@@ -174,65 +232,22 @@ describe('Provider global capture', () => {
 
   it('hands capture to the Provider that mounts when a render is thrown away', async () => {
     const { config } = makeConfig();
-    // Each instance counts its own uncaught items, since both share `config`.
-    const reports: number[] = [];
-    const ctor = jest.fn((options: Rollbar.Configuration) => {
-      const index = reports.push(0) - 1;
-      return new Rollbar({
-        ...options,
-        checkIgnore: (isUncaught) => {
-          if (isUncaught) reports[index] += 1;
-          return true;
-        },
-      });
-    });
+    const { ctor, reports } = countingRollbar();
     let provided: Rollbar | undefined;
     const Consumer = () => {
       provided = useRollbar();
       return null;
     };
-    let throwOnce = true;
-    const ThrowOnce = () => {
-      if (throwOnce) {
-        throwOnce = false;
-        throw new Error('first render');
-      }
-      return null;
-    };
-    // Rendering its children again after an error throws away the first
-    // attempt, including the Provider inside it, which never mounts.
-    class Retry extends React.Component<{ children: ReactNode }> {
-      state = { attempt: 0 };
-      static getDerivedStateFromError() {
-        return { attempt: 1 };
-      }
-      render() {
-        const { children } = this.props;
-        return (
-          <React.Fragment key={this.state.attempt}>{children}</React.Fragment>
-        );
-      }
-    }
+    const ThrowOnce = throwOnce();
 
-    const consoleError = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
-    const onError = (event: ErrorEvent) => event.preventDefault();
-    window.addEventListener('error', onError);
-    try {
-      render(
-        <Retry>
-          <Provider Rollbar={ctor as unknown as typeof Rollbar} config={config}>
-            <ThrowOnce />
-            <Consumer />
-          </Provider>
-        </Retry>,
-      );
-    } finally {
-      window.removeEventListener('error', onError);
-      consoleError.mockRestore();
-    }
-    await settle();
+    await renderQuietly(
+      <Retry>
+        <Provider Rollbar={ctor as unknown as typeof Rollbar} config={config}>
+          <ThrowOnce />
+          <Consumer />
+        </Provider>
+      </Retry>,
+    );
     reports.fill(0);
 
     await throwUncaught();
@@ -241,6 +256,72 @@ describe('Provider global capture', () => {
     expect(ctor).toHaveBeenCalledTimes(2);
     expect(provided).toBe(ctor.mock.results[1].value);
     expect(reports).toEqual([0, 2]);
+  });
+
+  it('keeps capture with the outer Provider when a nested render is thrown away', async () => {
+    const outer = makeConfig();
+    const inner = makeConfig();
+    const { ctor, reports } = countingRollbar();
+    const Counting = ctor as unknown as typeof Rollbar;
+    const ThrowOnce = throwOnce();
+
+    await renderQuietly(
+      <Retry>
+        <Provider Rollbar={Counting} config={outer.config}>
+          <Provider Rollbar={Counting} config={inner.config}>
+            <ThrowOnce />
+          </Provider>
+        </Provider>
+      </Retry>,
+    );
+    reports.fill(0);
+
+    await throwUncaught();
+    await rejectUnhandled();
+
+    // Thrown-away outer and inner, then the outer and inner that mounted.
+    expect(ctor).toHaveBeenCalledTimes(4);
+    expect(reports).toEqual([0, 0, 2, 0]);
+  });
+
+  it('keeps the previous owner capturing when a constructor throws', async () => {
+    const before = makeConfig();
+    const after = makeConfig();
+    const failing = jest.fn(() => {
+      throw new Error('bad config');
+    });
+    class Fallback extends React.Component<{ children: ReactNode }> {
+      state = { failed: false };
+      static getDerivedStateFromError() {
+        return { failed: true };
+      }
+      render() {
+        const { children } = this.props;
+        return this.state.failed ? null : children;
+      }
+    }
+
+    const { unmount } = render(
+      <Provider config={before.config}>
+        <div />
+      </Provider>,
+    );
+    unmount();
+    await renderQuietly(
+      <Fallback>
+        <Provider
+          Rollbar={failing as unknown as typeof Rollbar}
+          config={after.config}
+        >
+          <div />
+        </Provider>
+      </Fallback>,
+    );
+    before.reports.length = 0;
+    await throwUncaught();
+
+    expect(failing).toHaveBeenCalled();
+    expect(before.reports).toHaveLength(1);
   });
 
   it('turns capture off only where another instance owns it', () => {

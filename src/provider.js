@@ -6,6 +6,7 @@ import Rollbar from 'rollbar';
 import invariant from 'tiny-invariant';
 import { isRollbarInstance } from './utils';
 import {
+  abandonGlobalCapture,
   claimGlobalCapture,
   mountGlobalCapture,
   unmountGlobalCapture,
@@ -93,7 +94,7 @@ export class Provider extends Component {
         try {
           this.rollbar = new ctor(ctorOptions);
         } catch (e) {
-          unmountGlobalCapture(claim);
+          abandonGlobalCapture(claim);
           throw e;
         }
         if (claim) {
