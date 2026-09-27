@@ -11,7 +11,7 @@ const useClientLayoutEffect =
   typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 function useEffectOfType(isLayout, effect, deps) {
-  (isLayout ? useLayoutEffect : useEffect)(effect, deps);
+  (isLayout ? useClientLayoutEffect : useEffect)(effect, deps);
 }
 
 // Simple version does its job
