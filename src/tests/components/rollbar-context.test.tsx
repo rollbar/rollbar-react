@@ -207,6 +207,34 @@ describe('RollbarContext', () => {
       expect(contextOf(rollbar)).toBe('about');
     });
 
+    // React runs passive effect cleanups after the commit in which the
+    // ErrorBoundary reports, so the old page's hook has to leave before then.
+    it('reports with the new page context when the old page used useRollbarContext', async () => {
+      const { rollbar, reported } = makeReporting();
+      const HomePage = () => {
+        useRollbarContext('home#index');
+        return null;
+      };
+      const ui = (page: string) => (
+        <Provider instance={rollbar}>
+          <RollbarContext context={page} onRender>
+            <ErrorBoundary>
+              {page === 'home' ? <HomePage /> : <Throw />}
+            </ErrorBoundary>
+          </RollbarContext>
+        </Provider>
+      );
+
+      const { rerender } = render(ui('home'));
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('home#index');
+
+      rerender(ui('about'));
+      expect(reported).toEqual(['about']);
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('about');
+    });
+
     // An earlier sibling's componentDidUpdate runs before the ErrorBoundary
     // reports, in the same commit.
     it('reports with this context when a sibling context updates in the same commit', async () => {

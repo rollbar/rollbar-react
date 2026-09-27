@@ -593,7 +593,9 @@ As an alternative to the [`RollbarContext`] component, you can use the `useRollb
 to set the `context` in the [Rollbar.js] client provided by the [`Provider`] above in the React Tree.
 
 The hook sets the context in an effect, so like `RollbarContext` without `onRender`, it doesn't apply to errors
-thrown while the component and its children are first rendering.
+thrown while the component and its children are first rendering. It's removed as soon as React removes the component,
+though, so in the [`ErrorBoundary` pattern](#using-with-errorboundary) a page that used it doesn't set the context of
+an error the next page throws.
 
 Here's an example of using it in several components:
 
