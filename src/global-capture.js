@@ -40,15 +40,25 @@ function takeOver(claim, kind) {
   enable(claim, kind);
 }
 
-// Call before constructing the instance. Returns the options to construct it
-// with (global capture turned off where another instance already owns it) and
-// a claim to pass to the other functions once the instance exists.
-export function claimGlobalCapture(options) {
+function isAncestor(other, claim) {
+  for (let parent = claim.parent; parent; parent = parent.parent) {
+    if (parent === other) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Call before constructing the instance, with the claim of the nearest
+// enclosing Provider, if any. Returns the options to construct it with (global
+// capture turned off where another instance already owns it) and a claim to
+// pass to the other functions once the instance exists.
+export function claimGlobalCapture(options, parent = null) {
   if (typeof window === 'undefined' || !options) {
     return { options, claim: null };
   }
 
-  const claim = { rollbar: null, state: 'pending', captures: {} };
+  const claim = { rollbar: null, state: 'pending', captures: {}, parent };
   let ctorOptions = options;
 
   KINDS.forEach((kind) => {
@@ -93,9 +103,16 @@ export function mountGlobalCapture(claim) {
     if (owner === claim) {
       return;
     }
-    // A pending owner may be an ancestor Provider that mounts later in this
-    // same commit, so only an owner that has already unmounted is replaced.
-    if (!owner || owner.state === 'unmounted') {
+    // Mounting runs children before parents and earlier siblings before later
+    // ones, so of the Providers rendered in this commit only an ancestor mounts
+    // after this one, and it keeps capture. Any other owner still pending was
+    // rendered in a pass React threw away (or hasn't committed), so it is
+    // replaced like an unmounted one.
+    if (
+      !owner ||
+      owner.state === 'unmounted' ||
+      (owner.state === 'pending' && !isAncestor(owner, claim))
+    ) {
       takeOver(claim, kind);
     } else if (!waiting[kind].includes(claim)) {
       waiting[kind].push(claim);

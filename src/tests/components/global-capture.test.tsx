@@ -152,6 +152,97 @@ describe('Provider global capture', () => {
     expect(inner.reports).toHaveLength(0);
   });
 
+  it('keeps capture with the outer Provider through an instance Provider', async () => {
+    const outer = makeConfig();
+    const inner = makeConfig();
+    const shared = new Rollbar({ accessToken: 'POST_CLIENT_ITEM_TOKEN' });
+
+    render(
+      <Provider config={outer.config}>
+        <Provider instance={shared}>
+          <Provider config={inner.config}>
+            <div />
+          </Provider>
+        </Provider>
+      </Provider>,
+    );
+    await throwUncaught();
+
+    expect(outer.reports).toHaveLength(1);
+    expect(inner.reports).toHaveLength(0);
+  });
+
+  it('hands capture to the Provider that mounts when a render is thrown away', async () => {
+    const { config } = makeConfig();
+    // Each instance counts its own uncaught items, since both share `config`.
+    const reports: number[] = [];
+    const ctor = jest.fn((options: Rollbar.Configuration) => {
+      const index = reports.push(0) - 1;
+      return new Rollbar({
+        ...options,
+        checkIgnore: (isUncaught) => {
+          if (isUncaught) reports[index] += 1;
+          return true;
+        },
+      });
+    });
+    let provided: Rollbar | undefined;
+    const Consumer = () => {
+      provided = useRollbar();
+      return null;
+    };
+    let throwOnce = true;
+    const ThrowOnce = () => {
+      if (throwOnce) {
+        throwOnce = false;
+        throw new Error('first render');
+      }
+      return null;
+    };
+    // Rendering its children again after an error throws away the first
+    // attempt, including the Provider inside it, which never mounts.
+    class Retry extends React.Component<{ children: ReactNode }> {
+      state = { attempt: 0 };
+      static getDerivedStateFromError() {
+        return { attempt: 1 };
+      }
+      render() {
+        const { children } = this.props;
+        return (
+          <React.Fragment key={this.state.attempt}>{children}</React.Fragment>
+        );
+      }
+    }
+
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const onError = (event: ErrorEvent) => event.preventDefault();
+    window.addEventListener('error', onError);
+    try {
+      render(
+        <Retry>
+          <Provider Rollbar={ctor as unknown as typeof Rollbar} config={config}>
+            <ThrowOnce />
+            <Consumer />
+          </Provider>
+        </Retry>,
+      );
+    } finally {
+      window.removeEventListener('error', onError);
+      consoleError.mockRestore();
+    }
+    await settle();
+    reports.fill(0);
+
+    await throwUncaught();
+    await rejectUnhandled();
+
+    expect(ctor).toHaveBeenCalledTimes(2);
+    expect(provided).toBe(ctor.mock.results[1].value);
+    expect(reports).toEqual([0, 2]);
+  });
+
   it('turns capture off only where another instance owns it', () => {
     const owner = makeConfig();
     const other = makeConfig();

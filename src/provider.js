@@ -17,6 +17,7 @@ Context.displayName = 'Rollbar';
 export const RollbarInstance = Symbol('RollbarInstance');
 export const BaseOptions = Symbol('BaseOptions');
 export const RollbarCtor = Symbol('RollbarCtor');
+const CaptureClaim = Symbol('CaptureClaim');
 
 export function getRollbarFromContext(context) {
   const { [RollbarInstance]: rollbar } = context;
@@ -63,6 +64,9 @@ export class Provider extends Component {
     children: PropTypes.node,
   };
 
+  // Read only to find the enclosing Provider's global capture claim.
+  static contextType = Context;
+
   constructor(props) {
     super(props);
     const { instance } = this.props;
@@ -82,7 +86,10 @@ export class Provider extends Component {
       if (instance) {
         this.rollbar = instance;
       } else {
-        const { options: ctorOptions, claim } = claimGlobalCapture(options);
+        const { options: ctorOptions, claim } = claimGlobalCapture(
+          options,
+          this.parentClaim(),
+        );
         try {
           this.rollbar = new ctor(ctorOptions);
         } catch (e) {
@@ -97,6 +104,10 @@ export class Provider extends Component {
       this.options = options;
     }
     return this.rollbar;
+  }
+
+  parentClaim() {
+    return this.context?.[CaptureClaim] ?? null;
   }
 
   componentDidMount() {
@@ -118,6 +129,7 @@ export class Provider extends Component {
           [RollbarInstance]: rollbar,
           [BaseOptions]: options,
           [RollbarCtor]: ctor,
+          [CaptureClaim]: this.captureClaim ?? this.parentClaim(),
         }}
       >
         {children}
