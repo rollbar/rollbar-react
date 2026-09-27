@@ -400,7 +400,9 @@ is reported with the previous context.
 
 `onRender`, because by default `RollbarContext` sets the context when it mounts, which React does after the children
 have rendered and mounted. An error thrown while they're first rendering would be reported with the previous
-context. With `onRender`, `RollbarContext` sets the context during its first render, before the children render.
+context. With `onRender`, `RollbarContext` sets the context during its first render, before the children render,
+and again whenever the `context` prop changes, so a page that React mounts inside an existing `RollbarContext` is
+covered too.
 
 That means the context is set before React has committed anything. React can throw the render away, for example
 when an `ErrorBoundary` around the `RollbarContext` catches an error, and nothing mounts when rendering on the

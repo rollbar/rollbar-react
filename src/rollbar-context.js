@@ -25,10 +25,11 @@ export class RollbarContext extends Component {
 
   // Where this component sits among nested contexts; see context-stack.js.
   order = nextContextOrder();
-  active = false;
+  // The context this component has set since mounting, if it's mounted.
+  mountedContext = undefined;
 
   changeContext = () => {
-    this.active = true;
+    this.mountedContext = this.props.context;
     setContext(
       getRollbarFromContext(this.context),
       this.order,
@@ -49,15 +50,20 @@ export class RollbarContext extends Component {
 
   componentWillUnmount() {
     removeContext(getRollbarFromContext(this.context), this.order);
-    this.active = false;
+    this.mountedContext = undefined;
   }
 
   render() {
     const { onRender, context } = this.props;
-    if (onRender && !this.active) {
-      // Before the children render, so that errors they throw are reported
-      // with this context. The component is added to the stack on mount.
-      setRenderContext(getRollbarFromContext(this.context), context);
+    if (onRender && context !== this.mountedContext) {
+      // Before the children render, on the first render and when the context
+      // prop changes, so that errors they throw are reported with this
+      // context. It's applied for good on mount or update.
+      setRenderContext(
+        getRollbarFromContext(this.context),
+        this.order,
+        context,
+      );
     }
     return this.props.children;
   }

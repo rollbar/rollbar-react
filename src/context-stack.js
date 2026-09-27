@@ -20,16 +20,27 @@ function getStack(rollbar) {
   if (!stack) {
     // rollbar.js has no default payload, so options.payload is undefined
     // unless the config sets it.
-    stack = { base: rollbar.options.payload?.context, contexts: new Map() };
+    stack = {
+      base: rollbar.options.payload?.context,
+      contexts: new Map(),
+      // From setRenderContext: set during render, until React has committed.
+      rendering: new Map(),
+    };
     stacks.set(rollbar, stack);
   }
   return stack;
 }
 
 function applyStack(rollbar, stack) {
-  if (stack.contexts.size) {
-    const innermost = Math.max(...stack.contexts.keys());
-    rollbar.configure({ payload: { context: stack.contexts.get(innermost) } });
+  const { contexts, rendering } = stack;
+  if (contexts.size || rendering.size) {
+    const innermost = Math.max(...contexts.keys(), ...rendering.keys());
+    // A component that's rendering with a new context has the old one in
+    // `contexts` until it updates.
+    const context = rendering.has(innermost)
+      ? rendering.get(innermost).context
+      : contexts.get(innermost);
+    rollbar.configure({ payload: { context } });
     return;
   }
   stacks.delete(rollbar);
@@ -43,9 +54,11 @@ function applyStack(rollbar, stack) {
 }
 
 // Adds the context for `order`, or applies its new value if it's already
-// there.
+// there. It replaces any context setRenderContext set for `order`: the
+// component has mounted or updated, so that render was committed.
 export function setContext(rollbar, order, context) {
   const stack = getStack(rollbar);
+  stack.rendering.delete(order);
   stack.contexts.set(order, context);
   applyStack(rollbar, stack);
 }
@@ -57,23 +70,30 @@ export function removeContext(rollbar, order) {
   }
 }
 
-// For RollbarContext's onRender: sets `context` while the component renders,
-// before it has mounted and been added with setContext. React can throw that
-// render away without mounting anything, for example when an ErrorBoundary
-// around the component catches an error from its children, and nothing mounts
-// on the server. So a microtask applies the context of whatever is mounted
-// again. React commits in the same task that it finishes rendering in, and an
-// ErrorBoundary reports during the commit, so the microtask runs after both.
-// If a transition yields partway through rendering, the microtask runs then,
-// but when a child throws, React renders again from the start, synchronously,
+// For RollbarContext's onRender: sets `context` for `order` while the
+// component renders, before it has mounted or updated and called setContext.
+// It's kept in the stack so that anything else applied before React finishes,
+// like another context unmounting or updating in the same commit, doesn't
+// replace it before an ErrorBoundary inside reports.
+//
+// React can throw the render away without committing it, for example when an
+// ErrorBoundary around the component catches an error from its children, and
+// nothing mounts on the server. So if the component hasn't mounted or updated
+// by then, a microtask removes it again, leaving whatever did. React commits
+// in the same task that it finishes rendering in, and an ErrorBoundary
+// reports during the commit, so the microtask runs after both. If a
+// transition yields partway through rendering, the microtask runs then, but
+// when a child throws, React renders again from the start, synchronously,
 // before it commits.
-export function setRenderContext(rollbar, context) {
-  // Taken before the context changes, so that it's the one restored if
-  // nothing is mounted.
+export function setRenderContext(rollbar, order, context) {
   const stack = getStack(rollbar);
-  rollbar.configure({ payload: { context } });
+  const entry = { context };
+  stack.rendering.set(order, entry);
+  applyStack(rollbar, stack);
   Promise.resolve().then(() => {
-    if (stacks.get(rollbar) === stack) {
+    // Unless a later render replaced it; its own microtask removes that.
+    if (stack.rendering.get(order) === entry) {
+      stack.rendering.delete(order);
       applyStack(rollbar, stack);
     }
   });

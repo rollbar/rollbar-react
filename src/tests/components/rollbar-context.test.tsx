@@ -179,6 +179,98 @@ describe('RollbarContext', () => {
       rerender(ui(true, 2));
       expect(reported).toEqual(['home', 'home']);
     });
+
+    // React unmounts the old page before the new page's ErrorBoundary reports,
+    // in the same commit.
+    it('reports with the new page context when the old page unmounts in the same commit', async () => {
+      const { rollbar, reported } = makeReporting();
+      const Page = ({ name, throws }: { name: string; throws: boolean }) => (
+        <RollbarContext context={name} onRender>
+          <ErrorBoundary>
+            <Throw when={throws} />
+          </ErrorBoundary>
+        </RollbarContext>
+      );
+      const ui = (page: string) => (
+        <Provider instance={rollbar}>
+          <Page key={page} name={page} throws={page === 'about'} />
+        </Provider>
+      );
+
+      const { rerender } = render(ui('home'));
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('home');
+
+      rerender(ui('about'));
+      expect(reported).toEqual(['about']);
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('about');
+    });
+
+    // An earlier sibling's componentDidUpdate runs before the ErrorBoundary
+    // reports, in the same commit.
+    it('reports with this context when a sibling context updates in the same commit', async () => {
+      const { rollbar, reported } = makeReporting();
+      const ui = (showPage: boolean) => (
+        <Provider instance={rollbar}>
+          <RollbarContext context="nav">
+            <div />
+          </RollbarContext>
+          {showPage && (
+            <RollbarContext context="home" onRender>
+              <ErrorBoundary>
+                <Throw />
+              </ErrorBoundary>
+            </RollbarContext>
+          )}
+        </Provider>
+      );
+
+      const { rerender } = render(ui(false));
+      rerender(ui(true));
+      expect(reported).toEqual(['home']);
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('home');
+    });
+
+    it('reports with the new context when the context prop changes', async () => {
+      const { rollbar, reported } = makeReporting();
+      // React reuses the RollbarContext and mounts a new page inside it.
+      const ui = (page: string) => (
+        <Provider instance={rollbar}>
+          <RollbarContext context={page} onRender>
+            <ErrorBoundary>
+              <Throw key={page} when={page === 'about'} />
+            </ErrorBoundary>
+          </RollbarContext>
+        </Provider>
+      );
+
+      const { rerender } = render(ui('home'));
+      rerender(ui('about'));
+      expect(reported).toEqual(['about']);
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('about');
+    });
+
+    it('leaves nothing behind when the ErrorBoundary replaces an updated onRender context', async () => {
+      const { rollbar, reported } = makeReporting();
+      const ui = (page: string) => (
+        <Provider instance={rollbar}>
+          <ErrorBoundary>
+            <RollbarContext context={page} onRender>
+              <Throw when={page === 'about'} />
+            </RollbarContext>
+          </ErrorBoundary>
+        </Provider>
+      );
+
+      const { rerender } = render(ui('home'));
+      rerender(ui('about'));
+      expect(reported).toEqual(['about']);
+      await afterMicrotasks();
+      expect(contextOf(rollbar)).toBe('root');
+    });
   });
 
   describe('with onRender', () => {
