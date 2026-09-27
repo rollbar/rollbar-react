@@ -18,7 +18,11 @@ Context.displayName = 'Rollbar';
 export const RollbarInstance = Symbol('RollbarInstance');
 export const BaseOptions = Symbol('BaseOptions');
 export const RollbarCtor = Symbol('RollbarCtor');
-const CaptureClaim = Symbol('CaptureClaim');
+
+// Carries the enclosing Provider's global capture claim. Kept apart from
+// `Context`, whose value is new on every render, so that nested Providers
+// only subscribe to a value that doesn't change after their first render.
+const CaptureClaimContext = createContext(null);
 
 export function getRollbarFromContext(context) {
   const { [RollbarInstance]: rollbar } = context;
@@ -65,8 +69,7 @@ export class Provider extends Component {
     children: PropTypes.node,
   };
 
-  // Read only to find the enclosing Provider's global capture claim.
-  static contextType = Context;
+  static contextType = CaptureClaimContext;
 
   constructor(props) {
     super(props);
@@ -108,7 +111,7 @@ export class Provider extends Component {
   }
 
   parentClaim() {
-    return this.context?.[CaptureClaim] ?? null;
+    return this.context;
   }
 
   componentDidMount() {
@@ -125,16 +128,19 @@ export class Provider extends Component {
     const { options } = this;
 
     return (
-      <Context.Provider
-        value={{
-          [RollbarInstance]: rollbar,
-          [BaseOptions]: options,
-          [RollbarCtor]: ctor,
-          [CaptureClaim]: this.captureClaim ?? this.parentClaim(),
-        }}
+      <CaptureClaimContext.Provider
+        value={this.captureClaim ?? this.parentClaim()}
       >
-        {children}
-      </Context.Provider>
+        <Context.Provider
+          value={{
+            [RollbarInstance]: rollbar,
+            [BaseOptions]: options,
+            [RollbarCtor]: ctor,
+          }}
+        >
+          {children}
+        </Context.Provider>
+      </CaptureClaimContext.Provider>
     );
   }
 }

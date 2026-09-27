@@ -324,6 +324,28 @@ describe('Provider global capture', () => {
     expect(before.reports).toHaveLength(1);
   });
 
+  it('does not re-render a nested Provider when the outer one re-renders', () => {
+    const outer = makeConfig();
+    const inner = makeConfig();
+    let renders = 0;
+    const Consumer = () => {
+      useRollbar();
+      renders += 1;
+      return null;
+    };
+    const nested = (
+      <Provider config={inner.config}>
+        <Consumer />
+      </Provider>
+    );
+    const App = () => <Provider config={outer.config}>{nested}</Provider>;
+
+    const { rerender } = render(<App />);
+    rerender(<App />);
+
+    expect(renders).toBe(1);
+  });
+
   it('turns capture off only where another instance owns it', () => {
     const owner = makeConfig();
     const other = makeConfig();
