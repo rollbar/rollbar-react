@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router';
 import Rollbar from 'rollbar';
 import { Provider, ErrorBoundary } from '@rollbar/react';
 import ExampleErrors from './ExampleErrors';

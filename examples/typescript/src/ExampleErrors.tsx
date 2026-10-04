@@ -1,5 +1,4 @@
 import React, { ReactElement } from 'react';
-import PropTypes from 'prop-types';
 import Rollbar from 'rollbar';
 import { useState } from 'react';
 import { useRollbar, useRollbarContext } from '@rollbar/react';
@@ -53,9 +52,5 @@ function ExampleErrors(props: Props): ReactElement {
     </>
   );
 }
-
-ExampleErrors.propTypes = {
-  name: PropTypes.string,
-};
 
 export default ExampleErrors;

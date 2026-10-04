@@ -1,6 +1,7 @@
 # Typescript App Example
 
-This project demonstrates @rollbar/react in a basic Typescript app.
+This project demonstrates @rollbar/react in a basic Typescript app built with
+React 19 and React Router 7.
 
 ## Rollbar usage in this example
 
