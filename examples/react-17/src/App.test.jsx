@@ -37,6 +37,18 @@ describe('React 17 Rollbar playground', () => {
     ).toBeInTheDocument();
   });
 
+  test('ignores a trailing slash in the route', () => {
+    window.history.pushState(null, '', '/error-boundary/');
+    render(<App />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Crash safely.' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Error boundary' }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
   test('switches pages from the header navigation', () => {
     window.history.pushState(null, '', '/');
     render(<App />);

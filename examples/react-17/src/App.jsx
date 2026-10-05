@@ -107,10 +107,10 @@ export default App;
 // React Router's patched releases need React 18+, and this example exists to
 // show the SDK on React 17, so it switches between its two pages itself.
 function usePathname() {
-  const [pathname, setPathname] = useState(() => window.location.pathname);
+  const [pathname, setPathname] = useState(currentPathname);
 
   useEffect(() => {
-    const onPopState = () => setPathname(window.location.pathname);
+    const onPopState = () => setPathname(currentPathname());
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
@@ -123,6 +123,12 @@ function usePathname() {
   }, []);
 
   return [pathname, navigate];
+}
+
+// Ignore trailing slashes, as React Router did, so /error-boundary/ still
+// shows the ErrorBoundary page.
+function currentPathname() {
+  return window.location.pathname.replace(/(.)\/+$/, '$1');
 }
 
 function NavLink({ to, pathname, navigate, className, children, ...props }) {
