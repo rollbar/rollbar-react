@@ -1,15 +1,11 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 import App from './App';
 
 describe('React 17 Rollbar playground', () => {
   test('renders the interactive Rollbar demos', () => {
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <App />
-      </MemoryRouter>,
-    );
+    window.history.pushState(null, '', '/');
+    render(<App />);
 
     expect(
       screen.getByRole('heading', { name: 'See what Rollbar captures.' }),
@@ -30,11 +26,8 @@ describe('React 17 Rollbar playground', () => {
   });
 
   test('renders the ErrorBoundary demonstration route', () => {
-    render(
-      <MemoryRouter initialEntries={['/error-boundary']}>
-        <App />
-      </MemoryRouter>,
-    );
+    window.history.pushState(null, '', '/error-boundary');
+    render(<App />);
 
     expect(
       screen.getByRole('heading', { name: 'Crash safely.' }),
@@ -42,5 +35,32 @@ describe('React 17 Rollbar playground', () => {
     expect(
       screen.getByRole('button', { name: /trigger render error/i }),
     ).toBeInTheDocument();
+  });
+
+  test('ignores a trailing slash in the route', () => {
+    window.history.pushState(null, '', '/error-boundary/');
+    render(<App />);
+
+    expect(
+      screen.getByRole('heading', { name: 'Crash safely.' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Error boundary' }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
+  test('switches pages from the header navigation', () => {
+    window.history.pushState(null, '', '/');
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('link', { name: 'Error boundary' }));
+
+    expect(window.location.pathname).toBe('/error-boundary');
+    expect(
+      screen.getByRole('heading', { name: 'Crash safely.' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Error boundary' }),
+    ).toHaveAttribute('aria-current', 'page');
   });
 });

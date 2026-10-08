@@ -386,47 +386,59 @@ Here is an example of using `RollbarContext` with [React Router] if you have a t
 
 ```javascript
 import React from 'react';
-import { Router, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router';
 import { RollbarContext } from '@rollbar/react';
 import { About, ContactDetails, ContactsList } from './pages';
 
-const Routes = () => (
+const AppRoutes = () => (
   <Router>
-    <Switch>
-      <Route path="/about">
-        <RollbarContext context="/about">
-          <About />
-        </RollbarContext>
-      </Route>
-      <Route path="/contacts/:id">
-        <RollbarContext context="contacts/details">
-          <ContactDetails />
-        </RollbarContext>
-      </Route>
-      <Route path="/contacts">
-        <RollbarContext context="contacts">
-          <ContactsList />
-        </RollbarContext>
-      </Route>
-    </Switch>
+    <Routes>
+      <Route
+        path="/about"
+        element={
+          <RollbarContext context="/about">
+            <About />
+          </RollbarContext>
+        }
+      />
+      <Route
+        path="/contacts/:id"
+        element={
+          <RollbarContext context="contacts/details">
+            <ContactDetails />
+          </RollbarContext>
+        }
+      />
+      <Route
+        path="/contacts"
+        element={
+          <RollbarContext context="contacts">
+            <ContactsList />
+          </RollbarContext>
+        }
+      />
+    </Routes>
   </Router>
 );
 
-export default Routes;
+export default AppRoutes;
 ```
 
 Here's another example of using `RollbarContext` within a component that manages its own route:
 
 ```javascript
 import React from 'react';
-import { Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router';
 import { RollbarContext } from '@rollbar/react';
 
 export default function About(props) {
   return (
-    <Route path="/about">
-      <RollbarContext context="/about">…</RollbarContext>
-    </Route>
+    <Routes>
+      <Route
+        path="/about"
+        element={<RollbarContext context="/about">…</RollbarContext>}
+      />
+    </Routes>
   );
 }
 ```
@@ -679,6 +691,7 @@ function BookDetails({ bookId }) {
 [react context]: https://reactjs.org/docs/context.html
 [error boundaries]: https://reactjs.org/docs/error-boundaries.html
 [react hooks api]: https://reactjs.org/docs/hooks-intro.html
+[react router]: https://reactrouter.com/
 [history]: https://www.npmjs.com/package/history
 [history.location]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#location
 [history.action]: https://github.com/ReactTraining/history/blob/master/docs/api-reference.md#action
