@@ -15,6 +15,13 @@ import {
 export const ReportContext = createContext(undefined);
 ReportContext.displayName = 'RollbarReportContext';
 
+// The scope path: the orders of the RollbarContexts and ErrorBoundaries
+// around a component, outermost first, for reportWithContext. Each one
+// provides the path to itself, which never changes while it's mounted, so the
+// components that use useRollbarContext don't re-render when it changes.
+export const ScopeContext = createContext([]);
+ScopeContext.displayName = 'RollbarScopeContext';
+
 export class RollbarContext extends Component {
   static propTypes = {
     context: PropTypes.string.isRequired,
@@ -34,6 +41,8 @@ export class RollbarContext extends Component {
   mountedContext = undefined;
   // What ReportContext provides, kept until the context prop changes.
   reportContext = undefined;
+  // What ScopeContext provides, set on the first render.
+  path = undefined;
 
   changeContext = () => {
     this.mountedContext = this.props.context;
@@ -41,6 +50,7 @@ export class RollbarContext extends Component {
       getRollbarFromContext(this.context),
       this.order,
       this.props.context,
+      this.path,
     );
   };
 
@@ -60,7 +70,17 @@ export class RollbarContext extends Component {
   }
 
   render() {
+    // contextType is taken by the Provider's context.
+    return (
+      <ScopeContext.Consumer>
+        {(parentPath) => this.renderInScope(parentPath)}
+      </ScopeContext.Consumer>
+    );
+  }
+
+  renderInScope(parentPath) {
     const { onRender, context } = this.props;
+    this.path ??= [...parentPath, this.order];
     if (onRender && context !== this.mountedContext) {
       // Before the children render, on the first render and when the context
       // prop changes, so that errors they throw are reported with this
@@ -69,15 +89,18 @@ export class RollbarContext extends Component {
         getRollbarFromContext(this.context),
         this.order,
         context,
+        this.path,
       );
     }
     if (this.reportContext?.context !== context) {
       this.reportContext = { order: this.order, context };
     }
     return (
-      <ReportContext.Provider value={this.reportContext}>
-        {this.props.children}
-      </ReportContext.Provider>
+      <ScopeContext.Provider value={this.path}>
+        <ReportContext.Provider value={this.reportContext}>
+          {this.props.children}
+        </ReportContext.Provider>
+      </ScopeContext.Provider>
     );
   }
 }

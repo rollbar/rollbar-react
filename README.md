@@ -398,7 +398,10 @@ Put the `RollbarContext` outside the `ErrorBoundary`:
 The `ErrorBoundary` reports an error with the context of the nearest `RollbarContext` around it. That includes an
 error thrown while they're first rendering, before the `RollbarContext` has mounted, and an error thrown after a
 change to the `context` prop, before it has been applied. A `useRollbarContext` hook between the two that has set its
-context still takes precedence, as the innermost one.
+context still takes precedence, as the innermost one. A `RollbarContext` or hook elsewhere in the tree doesn't, even if
+it was mounted later and set the client's context, like a sibling of the `RollbarContext`. A hook doesn't mark where it
+is in the tree, so one in a component that renders before the `ErrorBoundary` inside the same `RollbarContext`, like a
+sidebar, counts as between them.
 
 Outside, because when the `ErrorBoundary` catches an error, React removes everything inside it before the error is
 reported. A `RollbarContext` inside it has already been removed by then.

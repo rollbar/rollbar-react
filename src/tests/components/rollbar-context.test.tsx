@@ -369,6 +369,101 @@ describe('RollbarContext', () => {
           expect(contextOf(rollbar)).toBe('home#index');
         });
 
+        // They rank after it too, but aren't between it and the ErrorBoundary.
+        it('ignores a later sibling RollbarContext', async () => {
+          const { rollbar, reported } = makeReporting();
+          const ui = (throws: boolean) => (
+            <Provider instance={rollbar}>
+              <RollbarContext context="home" onRender={onRender}>
+                <ErrorBoundary>
+                  <Throw when={throws} />
+                </ErrorBoundary>
+              </RollbarContext>
+              <RollbarContext context="footer" />
+            </Provider>
+          );
+
+          const { rerender } = render(ui(false));
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('footer');
+          rerender(ui(true));
+          expect(reported).toEqual(['home']);
+          expect(contextOf(rollbar)).toBe('footer');
+        });
+
+        it('ignores a useRollbarContext after the ErrorBoundary or outside the RollbarContext', async () => {
+          const { rollbar, reported } = makeReporting();
+          const Hook = ({ ctx }: { ctx: string }) => {
+            useRollbarContext(ctx);
+            return null;
+          };
+          const ui = (throws: boolean) => (
+            <Provider instance={rollbar}>
+              <RollbarContext context="home" onRender={onRender}>
+                <ErrorBoundary>
+                  <Throw when={throws} />
+                </ErrorBoundary>
+                <Hook ctx="sidebar" />
+              </RollbarContext>
+              <Hook ctx="footer" />
+            </Provider>
+          );
+
+          const { rerender } = render(ui(false));
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('footer');
+          rerender(ui(true));
+          expect(reported).toEqual(['home']);
+          expect(contextOf(rollbar)).toBe('footer');
+        });
+
+        // With onRender, it's still rendering when the ErrorBoundary reports.
+        it('ignores a later sibling onRender RollbarContext in the same commit', async () => {
+          const { rollbar, reported } = makeReporting();
+          render(
+            <Provider instance={rollbar}>
+              <RollbarContext context="home" onRender={onRender}>
+                <ErrorBoundary>
+                  <Throw />
+                </ErrorBoundary>
+                <RollbarContext context="sidebar" onRender />
+              </RollbarContext>
+            </Provider>,
+          );
+          expect(reported).toEqual(['home']);
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('sidebar');
+        });
+
+        it('keeps the innermost of several useRollbarContext hooks between it and the ErrorBoundary', async () => {
+          const { rollbar, reported } = makeReporting();
+          const Inner = ({ throws }: { throws: boolean }) => {
+            useRollbarContext('home#show');
+            return (
+              <ErrorBoundary>
+                <Throw when={throws} />
+              </ErrorBoundary>
+            );
+          };
+          const Outer = ({ throws }: { throws: boolean }) => {
+            useRollbarContext('home#index');
+            return <Inner throws={throws} />;
+          };
+          const ui = (throws: boolean) => (
+            <Provider instance={rollbar}>
+              <RollbarContext context="home" onRender={onRender}>
+                <Outer throws={throws} />
+              </RollbarContext>
+              <RollbarContext context="footer" />
+            </Provider>
+          );
+
+          const { rerender } = render(ui(false));
+          await afterMicrotasks();
+          rerender(ui(true));
+          expect(reported).toEqual(['home#show']);
+        });
+
         // React calls componentDidCatch before the RollbarContext mounts.
         it('puts the previous context back after reporting', async () => {
           const { rollbar, reported } = makeReporting();

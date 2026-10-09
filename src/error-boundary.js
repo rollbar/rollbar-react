@@ -5,8 +5,8 @@ import PropTypes from 'prop-types';
 import invariant from 'tiny-invariant';
 import { LEVEL_ERROR } from './constants';
 import { Context, getRollbarFromContext } from './provider';
-import { ReportContext } from './rollbar-context';
-import { reportWithContext } from './context-stack';
+import { ReportContext, ScopeContext } from './rollbar-context';
+import { nextContextOrder, reportWithContext } from './context-stack';
 import * as utils from './utils';
 
 const INITIAL_ERROR_STATE = { hasError: false, error: null };
@@ -36,6 +36,11 @@ export class ErrorBoundary extends Component {
     this.state = { ...INITIAL_ERROR_STATE };
   }
 
+  // Ranks this among the contexts around and inside it, and what ScopeContext
+  // provides; see reportWithContext.
+  order = nextContextOrder();
+  path = undefined;
+
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
@@ -46,7 +51,7 @@ export class ErrorBoundary extends Component {
     const data = { ...info, ...custom };
     const level = utils.value(targetLevel, LEVEL_ERROR, error, info);
     const rollbar = getRollbarFromContext(this.context);
-    reportWithContext(rollbar, this.reportContext, () => {
+    reportWithContext(rollbar, this.reportContext, this.path, () => {
       if (!errorMessage) {
         rollbar[level](error, data, callback);
       } else {
@@ -75,12 +80,23 @@ export class ErrorBoundary extends Component {
     // whenever this renders, including the render after a child throws, which
     // is the one React commits before calling componentDidCatch.
     return (
-      <ReportContext.Consumer>
-        {(reportContext) => {
-          this.reportContext = reportContext;
-          return content;
+      <ScopeContext.Consumer>
+        {(parentPath) => {
+          this.path ??= [...parentPath, this.order];
+          return (
+            <ReportContext.Consumer>
+              {(reportContext) => {
+                this.reportContext = reportContext;
+                return (
+                  <ScopeContext.Provider value={this.path}>
+                    {content}
+                  </ScopeContext.Provider>
+                );
+              }}
+            </ReportContext.Consumer>
+          );
         }}
-      </ReportContext.Consumer>
+      </ScopeContext.Consumer>
     );
   }
 }
