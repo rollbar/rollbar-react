@@ -1,6 +1,6 @@
 'use client';
 
-import { Component } from 'react';
+import React, { Component, createContext } from 'react';
 import PropTypes from 'prop-types';
 import { Context, getRollbarFromContext } from './provider';
 import {
@@ -9,6 +9,11 @@ import {
   setContext,
   setRenderContext,
 } from './context-stack';
+
+// The nearest RollbarContext's order and context, for an ErrorBoundary inside
+// it to report with; see reportWithContext in context-stack.js.
+export const ReportContext = createContext(undefined);
+ReportContext.displayName = 'RollbarReportContext';
 
 export class RollbarContext extends Component {
   static propTypes = {
@@ -27,6 +32,8 @@ export class RollbarContext extends Component {
   order = nextContextOrder();
   // The context this component has set since mounting, if it's mounted.
   mountedContext = undefined;
+  // What ReportContext provides, kept until the context prop changes.
+  reportContext = undefined;
 
   changeContext = () => {
     this.mountedContext = this.props.context;
@@ -42,8 +49,7 @@ export class RollbarContext extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { onRender, context } = this.props;
-    if (!onRender || context !== prevProps.context) {
+    if (this.props.context !== prevProps.context) {
       this.changeContext();
     }
   }
@@ -65,6 +71,13 @@ export class RollbarContext extends Component {
         context,
       );
     }
-    return this.props.children;
+    if (this.reportContext?.context !== context) {
+      this.reportContext = { order: this.order, context };
+    }
+    return (
+      <ReportContext.Provider value={this.reportContext}>
+        {this.props.children}
+      </ReportContext.Provider>
+    );
   }
 }

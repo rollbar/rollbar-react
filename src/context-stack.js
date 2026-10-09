@@ -31,10 +31,14 @@ function getStack(rollbar) {
   return stack;
 }
 
+function innermostOrder({ contexts, rendering }) {
+  return Math.max(...contexts.keys(), ...rendering.keys());
+}
+
 function applyStack(rollbar, stack) {
   const { contexts, rendering } = stack;
   if (contexts.size || rendering.size) {
-    const innermost = Math.max(...contexts.keys(), ...rendering.keys());
+    const innermost = innermostOrder(stack);
     // A component that's rendering with a new context has the old one in
     // `contexts` until it updates.
     const context = rendering.has(innermost)
@@ -74,17 +78,18 @@ export function removeContext(rollbar, order) {
 // component renders, before it has mounted or updated and called setContext.
 // It's kept in the stack so that anything else applied before React finishes,
 // like another context unmounting or updating in the same commit, doesn't
-// replace it before an ErrorBoundary inside reports.
+// replace it before the children have mounted.
 //
 // React can throw the render away without committing it, for example when an
 // ErrorBoundary around the component catches an error from its children, and
 // nothing mounts on the server. So if the component hasn't mounted or updated
-// by then, a microtask removes it again, leaving whatever did. React commits
-// in the same task that it finishes rendering in, and an ErrorBoundary
-// reports during the commit, so the microtask runs after both. If a
-// transition yields partway through rendering, the microtask runs then, but
-// when a child throws, React renders again from the start, synchronously,
-// before it commits.
+// by then, a microtask removes it again, leaving whatever did. When React
+// commits in the same task that it finished rendering in, that's after the
+// commit. React doesn't always: a transition can yield partway through
+// rendering, and React 19 can hold a commit back until a stylesheet in it has
+// loaded. Then the microtask runs first, and the children mount with the
+// previous context, as without onRender. ErrorBoundary doesn't rely on this;
+// see reportWithContext.
 export function setRenderContext(rollbar, order, context) {
   const stack = getStack(rollbar);
   const entry = { context };
@@ -97,4 +102,41 @@ export function setRenderContext(rollbar, order, context) {
       applyStack(rollbar, stack);
     }
   });
+}
+
+// For ErrorBoundary: calls `report` with the context of the nearest
+// RollbarContext around the ErrorBoundary, `reportContext`, which React
+// resolved while rendering it. That RollbarContext sets its context when it
+// mounts or updates, which React does after the ErrorBoundary inside has
+// reported, so on its first render or a change to its `context` prop the
+// client still has the previous context. Under onRender, React may also have
+// committed after the microtask in setRenderContext.
+//
+// rollbar.js has no per-item context, so the context is applied around the
+// report: rollbar.js takes the options an item is sent with when it's logged,
+// and configure() replaces them rather than changing them. An entry that ranks
+// after the RollbarContext, like a useRollbarContext between it and the
+// ErrorBoundary, keeps the context it set.
+export function reportWithContext(rollbar, reportContext, report) {
+  // Without a RollbarContext, the client isn't touched, as before.
+  if (!reportContext) {
+    report();
+    return;
+  }
+  const stack = stacks.get(rollbar);
+  const previous = rollbar.options.payload?.context;
+  if (
+    (stack && innermostOrder(stack) > reportContext.order) ||
+    reportContext.context === previous
+  ) {
+    report();
+    return;
+  }
+  rollbar.configure({ payload: { context: reportContext.context } });
+  try {
+    report();
+  } finally {
+    // As in applyStack, configure() ignores undefined.
+    rollbar.configure({ payload: { context: previous ?? '' } });
+  }
 }

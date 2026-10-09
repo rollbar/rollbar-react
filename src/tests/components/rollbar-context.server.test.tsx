@@ -7,12 +7,19 @@ import Rollbar from 'rollbar';
 import { Provider, useRollbarContext } from '../rollbar-react';
 
 describe('useRollbarContext on the server', () => {
+  let consoleError: jest.SpyInstance;
+
+  beforeEach(() => {
+    consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleError.mockRestore();
+  });
+
   it.each([false, true])(
     'renders without the useLayoutEffect warning (isLayout: %s)',
     (isLayout) => {
-      const consoleError = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
       const rollbar = new Rollbar({
         accessToken: 'POST_SERVER_ITEM_TOKEN',
         enabled: false,
@@ -28,7 +35,6 @@ describe('useRollbarContext on the server', () => {
         </Provider>,
       );
       expect(consoleError).not.toHaveBeenCalled();
-      consoleError.mockRestore();
     },
   );
 });
