@@ -417,6 +417,37 @@ describe('RollbarContext', () => {
           expect(contextOf(rollbar)).toBe('footer');
         });
 
+        // They render before it, but in a sibling's scope.
+        it('ignores a useRollbarContext inside a sibling ErrorBoundary or RollbarContext', async () => {
+          const { rollbar, reported } = makeReporting();
+          const Hook = ({ ctx }: { ctx: string }) => {
+            useRollbarContext(ctx);
+            return null;
+          };
+          const ui = (throws: boolean) => (
+            <Provider instance={rollbar}>
+              <RollbarContext context="dashboard" onRender={onRender}>
+                <ErrorBoundary>
+                  <Hook ctx="dashboard#chart" />
+                </ErrorBoundary>
+                <RollbarContext context="nav">
+                  <Hook ctx="nav#menu" />
+                </RollbarContext>
+                <ErrorBoundary>
+                  <Throw when={throws} />
+                </ErrorBoundary>
+              </RollbarContext>
+            </Provider>
+          );
+
+          const { rerender } = render(ui(false));
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('nav#menu');
+          rerender(ui(true));
+          expect(reported).toEqual(['dashboard']);
+          expect(contextOf(rollbar)).toBe('nav#menu');
+        });
+
         // With onRender, it's still rendering when the ErrorBoundary reports.
         it('ignores a later sibling onRender RollbarContext in the same commit', async () => {
           const { rollbar, reported } = makeReporting();

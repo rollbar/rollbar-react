@@ -134,9 +134,11 @@ export function setRenderContext(rollbar, order, context, path) {
 // - inside the ErrorBoundary. React has removed what was mounted there before
 //   the ErrorBoundary reports, so that's an onRender context whose render
 //   React threw away, around the child that threw.
-// - a useRollbarContext that rendered before the ErrorBoundary: one between
-//   them. A hook doesn't provide a scope, so one in an earlier sibling of the
-//   ErrorBoundary counts too, as it does for the client's context.
+// - a useRollbarContext that rendered before the ErrorBoundary, and whose
+//   scopes are all around it: one between them. A hook doesn't provide a
+//   scope, so one in an earlier sibling of the ErrorBoundary counts too, as it
+//   does for the client's context, unless it's inside a sibling ErrorBoundary
+//   or RollbarContext.
 // Other entries can rank after the RollbarContext without being around the
 // ErrorBoundary, like a sibling RollbarContext or hook created later, so the
 // scope paths decide. A RollbarContext between them would be the nearest one.
@@ -166,7 +168,12 @@ export function reportWithContext(
     }
     // A RollbarContext's path ends with its own order, a hook's doesn't.
     const isHook = path[path.length - 1] !== order;
-    if (path.includes(boundary) || (isHook && order < boundary)) {
+    // Every scope around the hook is around the ErrorBoundary too.
+    const aroundBoundary = path.every((o, i) => o === boundaryPath[i]);
+    if (
+      path.includes(boundary) ||
+      (isHook && aroundBoundary && order < boundary)
+    ) {
       innermost = order;
       context = contextAt(stack, order);
     }
