@@ -1,6 +1,6 @@
 {
   "name": "@rollbar/react",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Effortlessly track and debug errors in your React applications with Rollbar. This package includes advanced error tracking features and a set of React-specific enhancements to help you identify and fix issues more quickly.",
   "main": "lib",
   "module": "dist",
@@ -107,6 +107,6 @@
   "peerDependencies": {
     "prop-types": "^15.7.2",
     "react": "16.x || 17.x || 18.x || 19.x",
-    "rollbar": "^2.26.4 || ^3.0.0-alpha.3"
+    "rollbar": "^2.26.4 || ^3.0.0-alpha.3 || ^4.0.0"
   }
 }
