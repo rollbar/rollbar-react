@@ -1,7 +1,7 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { format } from 'util';
 import { renderToString } from 'react-dom/server';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import Rollbar from 'rollbar';
 import {
   ErrorBoundary,
@@ -163,6 +163,51 @@ describe('RollbarContext', () => {
         </Provider>,
       );
       expect(error).toHaveBeenCalledTimes(1);
+    });
+
+    // React removes the component, and the hook's entry, before the
+    // ErrorBoundary reports.
+    it('reports with the context of a useRollbarContext in the component that throws on an update', () => {
+      const { rollbar, reported } = makeReporting();
+      const Page = ({ throws }: { throws: boolean }) => {
+        useRollbarContext('home#index');
+        if (throws) {
+          throw new Error('update error');
+        }
+        return null;
+      };
+      const ui = (throws: boolean) => (
+        <Provider instance={rollbar}>
+          <ErrorBoundary>
+            <Page throws={throws} />
+          </ErrorBoundary>
+        </Provider>
+      );
+
+      const { rerender } = render(ui(false));
+      expect(contextOf(rollbar)).toBe('home#index');
+      rerender(ui(true));
+      expect(reported).toEqual(['home#index']);
+      expect(contextOf(rollbar)).toBe('root');
+    });
+
+    it('reports with the context of a useRollbarContext around it on first render', () => {
+      const { rollbar, reported } = makeReporting();
+      const Page = () => {
+        useRollbarContext('home#index');
+        return (
+          <ErrorBoundary>
+            <Throw />
+          </ErrorBoundary>
+        );
+      };
+      render(
+        <Provider instance={rollbar}>
+          <Page />
+        </Provider>,
+      );
+      expect(reported).toEqual(['home#index']);
+      expect(contextOf(rollbar)).toBe('home#index');
     });
 
     it('reports with the previous context by default', () => {
@@ -391,7 +436,10 @@ describe('RollbarContext', () => {
           expect(contextOf(rollbar)).toBe('footer');
         });
 
-        it('ignores a useRollbarContext after the ErrorBoundary or outside the RollbarContext', async () => {
+        // A hook doesn't provide a scope, so where it renders among the
+        // ErrorBoundary's siblings isn't known, and it counts as between them
+        // like it does for the client's context.
+        it('keeps the context of a useRollbarContext after the ErrorBoundary, but not outside the RollbarContext', async () => {
           const { rollbar, reported } = makeReporting();
           const Hook = ({ ctx }: { ctx: string }) => {
             useRollbarContext(ctx);
@@ -403,7 +451,7 @@ describe('RollbarContext', () => {
                 <ErrorBoundary>
                   <Throw when={throws} />
                 </ErrorBoundary>
-                <Hook ctx="sidebar" />
+                <Hook ctx="home#footer" />
               </RollbarContext>
               <Hook ctx="footer" />
             </Provider>
@@ -413,8 +461,116 @@ describe('RollbarContext', () => {
           await afterMicrotasks();
           expect(contextOf(rollbar)).toBe('footer');
           rerender(ui(true));
-          expect(reported).toEqual(['home']);
+          expect(reported).toEqual(['home#footer']);
           expect(contextOf(rollbar)).toBe('footer');
+        });
+
+        // A new ErrorBoundary takes a new order, after the hook's.
+        it('treats a sibling useRollbarContext the same after the ErrorBoundary remounts', async () => {
+          const { rollbar, reported } = makeReporting();
+          const Footer = () => {
+            useRollbarContext('app#footer');
+            return null;
+          };
+          const ui = (pathname: string, throws: boolean) => (
+            <Provider instance={rollbar}>
+              <RollbarContext context="app" onRender={onRender}>
+                <ErrorBoundary key={pathname}>
+                  <Throw when={throws} />
+                </ErrorBoundary>
+                <Footer />
+              </RollbarContext>
+            </Provider>
+          );
+
+          const { rerender } = render(ui('/', false));
+          await afterMicrotasks();
+          rerender(ui('/', true));
+          rerender(ui('/about', false));
+          await afterMicrotasks();
+          rerender(ui('/about', true));
+          expect(reported).toEqual(['app#footer', 'app#footer']);
+        });
+
+        it('keeps the context of a useRollbarContext whose component rendered with the error', async () => {
+          const { rollbar, reported } = makeReporting();
+          const Page = ({ throws }: { throws: boolean }) => {
+            useRollbarContext('home#index');
+            return <Throw when={throws} />;
+          };
+          const ui = (throws: boolean) => (
+            <Provider instance={rollbar}>
+              <RollbarContext context="home" onRender={onRender}>
+                <ErrorBoundary>
+                  <Page throws={throws} />
+                </ErrorBoundary>
+              </RollbarContext>
+            </Provider>
+          );
+
+          const { rerender } = render(ui(false));
+          await afterMicrotasks();
+          rerender(ui(true));
+          expect(reported).toEqual(['home#index']);
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('home');
+        });
+
+        it('reports with the new page useRollbarContext when it throws on its first render', async () => {
+          const { rollbar, reported } = makeReporting();
+          const HomePage = () => {
+            useRollbarContext('home#index');
+            return null;
+          };
+          const AboutPage = () => {
+            useRollbarContext('about#index');
+            throw new Error('render error');
+          };
+          const ui = (page: string) => (
+            <Provider instance={rollbar}>
+              <RollbarContext context={page} onRender={onRender}>
+                <ErrorBoundary>
+                  {page === 'home' ? <HomePage /> : <AboutPage />}
+                </ErrorBoundary>
+              </RollbarContext>
+            </Provider>
+          );
+
+          const { rerender } = render(ui('home'));
+          await afterMicrotasks();
+          rerender(ui('about'));
+          expect(reported).toEqual(['about#index']);
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('about');
+        });
+
+        // React removes the hook's component before the ErrorBoundary reports,
+        // and it didn't render with the error.
+        it('reports with this context when a child throws on its own update', async () => {
+          const { rollbar, reported } = makeReporting();
+          let throwOnUpdate = () => {};
+          const Child = () => {
+            const [throws, setThrows] = useState(false);
+            throwOnUpdate = () => setThrows(true);
+            return <Throw when={throws} />;
+          };
+          const Page = () => {
+            useRollbarContext('home#index');
+            return <Child />;
+          };
+          render(
+            <Provider instance={rollbar}>
+              <RollbarContext context="home" onRender={onRender}>
+                <ErrorBoundary>
+                  <Page />
+                </ErrorBoundary>
+              </RollbarContext>
+            </Provider>,
+          );
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('home#index');
+          act(() => throwOnUpdate());
+          expect(reported).toEqual(['home']);
         });
 
         // They render before it, but in a sibling's scope.

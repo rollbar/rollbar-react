@@ -397,11 +397,12 @@ Put the `RollbarContext` outside the `ErrorBoundary`:
 
 The `ErrorBoundary` reports an error with the context of the nearest `RollbarContext` around it. That includes an
 error thrown while they're first rendering, before the `RollbarContext` has mounted, and an error thrown after a
-change to the `context` prop, before it has been applied. A `useRollbarContext` hook between the two that has set its
-context still takes precedence, as the innermost one. A `RollbarContext` or hook elsewhere in the tree doesn't, even if
-it was mounted later and set the client's context, like a sibling of the `RollbarContext`. A hook doesn't provide a
-scope of its own, so one in a component that renders before the `ErrorBoundary` inside the same `RollbarContext`, like a
-sidebar, counts as between them. One inside another `ErrorBoundary` or `RollbarContext` there doesn't.
+change to the `context` prop, before it has been applied. A `useRollbarContext` hook between the two still takes
+precedence, as the innermost one, and so does one inside the `ErrorBoundary` in a component that rendered with the
+error; see [the hook](#userollbarcontext-hook). A `RollbarContext` or hook elsewhere in the tree doesn't, even if it
+was mounted later and set the client's context, like a sibling of the `RollbarContext`. A hook doesn't provide a scope
+of its own, so one in another component inside the same `RollbarContext`, like a sidebar or a footer, counts as between
+them, as it does for the client's context. One inside another `ErrorBoundary` or `RollbarContext` there doesn't.
 
 Outside, because when the `ErrorBoundary` catches an error, React removes everything inside it before the error is
 reported. A `RollbarContext` inside it has already been removed by then.
@@ -611,10 +612,13 @@ As an alternative to the [`RollbarContext`] component, you can use the `useRollb
 to set the `context` in the [Rollbar.js] client provided by the [`Provider`] above in the React Tree.
 
 The hook sets the context in an effect, so like `RollbarContext` without `onRender`, it doesn't apply to anything sent
-while the component and its children are first rendering and mounting, and an `ErrorBoundary` inside the component
-can't report with it then either. It's removed as soon as React removes the component, though, so in the
-[`ErrorBoundary` pattern](#using-with-errorboundary) a page that used it doesn't set the context of an error the next
-page throws.
+while the component and its children are first rendering and mounting. An `ErrorBoundary` around or inside the
+component does report with it, including then, if the component rendered with the error: it threw, or a child that
+rendered with it did. React removes the component before an `ErrorBoundary` around it reports, and the hook's context
+with it, so an error the component didn't render with, like one a child throws on its own state update or in an
+effect, gets the context around the component. That's also why, in the
+[`ErrorBoundary` pattern](#using-with-errorboundary), a page that used the hook doesn't set the context of an error the
+next page throws.
 
 Here's an example of using it in several components:
 

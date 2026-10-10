@@ -6,7 +6,11 @@ import invariant from 'tiny-invariant';
 import { LEVEL_ERROR } from './constants';
 import { Context, getRollbarFromContext } from './provider';
 import { ReportContext, ScopeContext } from './rollbar-context';
-import { nextContextOrder, reportWithContext } from './context-stack';
+import {
+  getHookRenders,
+  nextContextOrder,
+  reportWithContext,
+} from './context-stack';
 import * as utils from './utils';
 
 const INITIAL_ERROR_STATE = { hasError: false, error: null };
@@ -40,6 +44,9 @@ export class ErrorBoundary extends Component {
   // provides; see reportWithContext.
   order = nextContextOrder();
   path = undefined;
+  // The useRollbarContext hooks that rendered with the error; see
+  // setHookRender.
+  renderedHooks = undefined;
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
@@ -51,14 +58,20 @@ export class ErrorBoundary extends Component {
     const data = { ...info, ...custom };
     const level = utils.value(targetLevel, LEVEL_ERROR, error, info);
     const rollbar = getRollbarFromContext(this.context);
-    reportWithContext(rollbar, this.reportContext, this.path, () => {
-      if (!errorMessage) {
-        rollbar[level](error, data, callback);
-      } else {
-        let logMessage = utils.value(errorMessage, '', error, info);
-        rollbar[level](logMessage, error, data, callback);
-      }
-    });
+    reportWithContext(
+      rollbar,
+      this.reportContext,
+      this.path,
+      this.renderedHooks,
+      () => {
+        if (!errorMessage) {
+          rollbar[level](error, data, callback);
+        } else {
+          let logMessage = utils.value(errorMessage, '', error, info);
+          rollbar[level](logMessage, error, data, callback);
+        }
+      },
+    );
   }
 
   resetError = () => {
@@ -68,6 +81,12 @@ export class ErrorBoundary extends Component {
   render() {
     const { hasError, error } = this.state;
     const { fallbackUI: FallbackUI, children } = this.props;
+
+    // React renders this right after the child that threw, before it commits,
+    // which may not be in the same task.
+    this.renderedHooks = hasError
+      ? getHookRenders(getRollbarFromContext(this.context))
+      : undefined;
 
     let content = null;
     if (!hasError) {
