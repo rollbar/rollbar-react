@@ -14,6 +14,11 @@ import { createRequire } from 'node:module';
 // `createRequire` works on every version we support.
 const pkg = createRequire(import.meta.url)('./package.json');
 
+// prop-types is a regular dependency rather than a peer, so peerDepsExternal
+// won't externalize it. Keep it external so consumers dedupe it and bundlers
+// can still strip it from production builds.
+const EXTERNAL = ['prop-types'];
+
 const COMMON_PLUGINS = [
   resolve(),
   peerDepsExternal(),
@@ -52,6 +57,7 @@ export default [
         rollbar: 'Rollbar',
       },
     },
+    external: EXTERNAL,
     plugins: [...COMMON_PLUGINS, commonjs()],
     onwarn,
   },
@@ -89,6 +95,7 @@ export default [
         entryFileNames
       },
     ],
+    external: EXTERNAL,
     plugins: [
       ...COMMON_PLUGINS,
       preserveDirectives({ suppressPreserveModulesWarning: true }),
