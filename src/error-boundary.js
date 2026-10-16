@@ -44,6 +44,11 @@ export class ErrorBoundary extends Component {
   // provides; see reportWithContext.
   order = nextContextOrder();
   path = undefined;
+  // fallbackUI gets a scope of its own, next to this one rather than inside
+  // it: React mounts it before componentDidCatch, so a RollbarContext or hook
+  // in it must not look like one around the child that threw.
+  fallbackOrder = nextContextOrder();
+  fallbackPath = undefined;
   // The useRollbarContext hooks that rendered with the error; see
   // setHookRender.
   renderedHooks = undefined;
@@ -62,6 +67,7 @@ export class ErrorBoundary extends Component {
       rollbar,
       this.reportContext,
       this.path,
+      this.fallbackOrder,
       this.renderedHooks,
       () => {
         if (!errorMessage) {
@@ -102,12 +108,15 @@ export class ErrorBoundary extends Component {
       <ScopeContext.Consumer>
         {(parentPath) => {
           this.path ??= [...parentPath, this.order];
+          this.fallbackPath ??= [...parentPath, this.fallbackOrder];
           return (
             <ReportContext.Consumer>
               {(reportContext) => {
                 this.reportContext = reportContext;
                 return (
-                  <ScopeContext.Provider value={this.path}>
+                  <ScopeContext.Provider
+                    value={hasError ? this.fallbackPath : this.path}
+                  >
                     {content}
                   </ScopeContext.Provider>
                 );

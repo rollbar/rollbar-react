@@ -155,6 +155,22 @@ export function getHookRenders(rollbar) {
   return rendered && new Map(rendered);
 }
 
+// The context the stack would apply without the entries inside `scope`, or
+// undefined if the one it applies isn't inside `scope`.
+function contextOutside(stack, scope) {
+  const { paths } = stack;
+  if (!paths.get(innermostOrder(stack))?.includes(scope)) {
+    return undefined;
+  }
+  let innermost = 0;
+  paths.forEach((path, order) => {
+    if (order > innermost && !path.includes(scope)) {
+      innermost = order;
+    }
+  });
+  return innermost ? contextAt(stack, innermost) : stack.base ?? '';
+}
+
 // For ErrorBoundary: calls `report` with the context of the nearest
 // RollbarContext around the ErrorBoundary, `reportContext`, which React
 // resolved while rendering it. That RollbarContext sets its context when it
@@ -165,12 +181,12 @@ export function getHookRenders(rollbar) {
 //
 // An entry inside that RollbarContext takes precedence, the innermost one, if
 // it's one of:
-// - inside the ErrorBoundary. React has removed what was mounted there before
-//   the ErrorBoundary reports, so that's an onRender context whose render
-//   React threw away, around the child that threw, or a hook in
-//   `renderedHooks`, the copy of setHookRender's entries the ErrorBoundary
-//   took when it rendered. A hook in a component that didn't render with the
-//   error, like the previous page, has been removed.
+// - inside the ErrorBoundary, around its children. React has removed what was
+//   mounted there before the ErrorBoundary reports, so that's an onRender
+//   context whose render React threw away, around the child that threw, or a
+//   hook in `renderedHooks`, the copy of setHookRender's entries the
+//   ErrorBoundary took when it rendered. A hook in a component that didn't
+//   render with the error, like the previous page, has been removed.
 // - a useRollbarContext whose scopes are all around the ErrorBoundary: one
 //   between them. A hook doesn't provide a scope, so one in a sibling of the
 //   ErrorBoundary counts too, before or after it, as it does for the client's
@@ -181,9 +197,16 @@ export function getHookRenders(rollbar) {
 // A hook's entry in `renderedHooks` replaces its entry in the stack: it's the
 // context it has rendered with, which it sets once it commits.
 //
+// Entries in the ErrorBoundary's fallbackUI never count. React mounts it, and
+// runs its layout effects, before the ErrorBoundary reports, so a
+// RollbarContext or a layout useRollbarContext in it may already have set the
+// client's context. It has a scope of its own, `fallback`, next to the
+// ErrorBoundary's.
+//
 // Without a RollbarContext, the same entries take precedence over the
-// client's context, and if there aren't any, the client isn't touched, as
-// before.
+// client's context. If there aren't any, the client isn't touched, as before,
+// unless its context comes from the fallbackUI: then it's reported with the
+// context the stack would apply without it.
 //
 // rollbar.js has no per-item context, so the context is applied around the
 // report: rollbar.js takes the options an item is sent with when it's logged,
@@ -192,6 +215,7 @@ export function reportWithContext(
   rollbar,
   reportContext,
   boundaryPath,
+  fallback,
   renderedHooks,
   report,
 ) {
@@ -222,8 +246,11 @@ export function reportWithContext(
     }
   });
   if (!innermost) {
-    report();
-    return;
+    context = stack && contextOutside(stack, fallback);
+    if (context === undefined) {
+      report();
+      return;
+    }
   }
   const previous = rollbar.options.payload?.context;
   if (context === previous) {

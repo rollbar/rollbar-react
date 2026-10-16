@@ -165,6 +165,25 @@ describe('RollbarContext', () => {
       expect(error).toHaveBeenCalledTimes(1);
     });
 
+    // React mounts the fallbackUI before the ErrorBoundary reports.
+    it("reports with the client's context, not the fallbackUI's, outside a RollbarContext", () => {
+      const { rollbar, reported } = makeReporting();
+      const Fallback = () => (
+        <RollbarContext context="error-page">
+          <div />
+        </RollbarContext>
+      );
+      render(
+        <Provider instance={rollbar}>
+          <ErrorBoundary fallbackUI={Fallback}>
+            <Throw />
+          </ErrorBoundary>
+        </Provider>,
+      );
+      expect(reported).toEqual(['root']);
+      expect(contextOf(rollbar)).toBe('error-page');
+    });
+
     // React removes the component, and the hook's entry, before the
     // ErrorBoundary reports.
     it('reports with the context of a useRollbarContext in the component that throws on an update', () => {
@@ -620,6 +639,48 @@ describe('RollbarContext', () => {
           expect(reported).toEqual(['home']);
           await afterMicrotasks();
           expect(contextOf(rollbar)).toBe('sidebar');
+        });
+
+        // React mounts the fallbackUI, and runs its layout effects, before
+        // the ErrorBoundary reports.
+        it.each([
+          [
+            'a RollbarContext',
+            () => (
+              <RollbarContext context="error-page">
+                <div />
+              </RollbarContext>
+            ),
+          ],
+          [
+            'an onRender RollbarContext',
+            () => (
+              <RollbarContext context="error-page" onRender>
+                <div />
+              </RollbarContext>
+            ),
+          ],
+          [
+            'a layout useRollbarContext',
+            () => {
+              useRollbarContext('error-page', true);
+              return null;
+            },
+          ],
+        ])('ignores %s in the fallbackUI', async (_, Fallback) => {
+          const { rollbar, reported } = makeReporting();
+          render(
+            <Provider instance={rollbar}>
+              <RollbarContext context="home" onRender={onRender}>
+                <ErrorBoundary fallbackUI={Fallback}>
+                  <Throw />
+                </ErrorBoundary>
+              </RollbarContext>
+            </Provider>,
+          );
+          expect(reported).toEqual(['home']);
+          await afterMicrotasks();
+          expect(contextOf(rollbar)).toBe('error-page');
         });
 
         it('keeps the innermost of several useRollbarContext hooks between it and the ErrorBoundary', async () => {

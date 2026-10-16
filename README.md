@@ -403,6 +403,8 @@ error; see [the hook](#userollbarcontext-hook). A `RollbarContext` or hook elsew
 was mounted later and set the client's context, like a sibling of the `RollbarContext`. A hook doesn't provide a scope
 of its own, so one in another component inside the same `RollbarContext`, like a sidebar or a footer, counts as between
 them, as it does for the client's context. One inside another `ErrorBoundary` or `RollbarContext` there doesn't.
+Neither does a `RollbarContext` or hook in the `ErrorBoundary`'s own `fallbackUI`, although React mounts it before the
+error is reported; it sets the context for what the fallback sends afterwards.
 
 Outside, because when the `ErrorBoundary` catches an error, React removes everything inside it before the error is
 reported. A `RollbarContext` inside it has already been removed by then.
