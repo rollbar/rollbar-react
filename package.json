@@ -108,5 +108,10 @@
     "prop-types": "^15.7.2",
     "react": "16.x || 17.x || 18.x || 19.x",
     "rollbar": "^2.26.4 || ^3.0.0-alpha.3 || ^4.0.0"
+  },
+  "overrides": {
+    "@istanbuljs/load-nyc-config": {
+      "js-yaml": "^4.1.0"
+    }
   }
 }
