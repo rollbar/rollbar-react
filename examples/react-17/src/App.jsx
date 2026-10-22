@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Provider as RollbarProvider,
   ErrorBoundary,
@@ -61,6 +60,7 @@ const features = [
 ];
 
 function App() {
+  const [pathname, navigate] = usePathname();
   const [activity, setActivity] = useState([]);
 
   const addActivity = (event) => {
@@ -83,16 +83,17 @@ function App() {
   return (
     <RollbarProvider Rollbar={Rollbar} config={rollbarConfig}>
       <div className="app-shell">
-        <Header hasAccessToken={Boolean(accessToken)} />
+        <Header
+          hasAccessToken={Boolean(accessToken)}
+          pathname={pathname}
+          navigate={navigate}
+        />
         <main>
-          <Routes>
-            <Route path="/" element={<Playground onActivity={addActivity} />} />
-            <Route
-              path="/error-boundary"
-              element={<ErrorBoundaryDemo onActivity={addActivity} />}
-            />
-            <Route path="*" element={<Playground onActivity={addActivity} />} />
-          </Routes>
+          {pathname === '/error-boundary' ? (
+            <ErrorBoundaryDemo onActivity={addActivity} />
+          ) : (
+            <Playground onActivity={addActivity} />
+          )}
         </main>
         <ActivityPanel activity={activity} />
         <Footer />
@@ -103,11 +104,76 @@ function App() {
 
 export default App;
 
-function Header({ hasAccessToken }) {
+// React Router's patched releases need React 18+, and this example exists to
+// show the SDK on React 17, so it switches between its two pages itself.
+function usePathname() {
+  const [pathname, setPathname] = useState(currentPathname);
+
+  useEffect(() => {
+    const onPopState = () => setPathname(currentPathname());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const navigate = useCallback((to) => {
+    if (to !== window.location.pathname) {
+      window.history.pushState(null, '', to);
+    }
+    setPathname(to);
+  }, []);
+
+  return [pathname, navigate];
+}
+
+// Ignore trailing slashes, as React Router did, so /error-boundary/ still
+// shows the ErrorBoundary page.
+function currentPathname() {
+  return window.location.pathname.replace(/(.)\/+$/, '$1');
+}
+
+function NavLink({ to, pathname, navigate, className, children, ...props }) {
+  const isActive = pathname === to;
+
+  const onClick = (event) => {
+    // Leave modified clicks (new tab, new window) to the browser.
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    navigate(to);
+  };
+
+  return (
+    <a
+      {...props}
+      href={to}
+      className={[className, isActive && 'active'].filter(Boolean).join(' ')}
+      aria-current={isActive ? 'page' : undefined}
+      onClick={onClick}
+    >
+      {children}
+    </a>
+  );
+}
+
+function Header({ hasAccessToken, pathname, navigate }) {
+  const linkProps = { pathname, navigate };
+
   return (
     <header className="site-header">
       <div className="header-inner">
-        <NavLink className="brand" to="/" aria-label="Rollbar React home">
+        <NavLink
+          {...linkProps}
+          className="brand"
+          to="/"
+          aria-label="Rollbar React home"
+        >
           <span className="brand-mark" aria-hidden="true">
             <i />
             <i />
@@ -120,10 +186,12 @@ function Header({ hasAccessToken }) {
         </NavLink>
 
         <nav className="primary-nav" aria-label="Example navigation">
-          <NavLink end to="/">
+          <NavLink {...linkProps} to="/">
             Playground
           </NavLink>
-          <NavLink to="/error-boundary">Error boundary</NavLink>
+          <NavLink {...linkProps} to="/error-boundary">
+            Error boundary
+          </NavLink>
         </nav>
 
         <div

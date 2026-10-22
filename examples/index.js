@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Rollbar from 'rollbar';
-import { Router, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router';
 import { Client } from 'rollbar-react-native';
 import {
   Provider,
@@ -73,33 +73,45 @@ function extraData(error, info) {
 
 const stack = `\n    in Card\n    in App\n    in ErrorBoundary\n    in ErrorProvider`;
 
-const Routes = () => (
+const AppRoutes = () => (
   <Router>
-    <Switch>
-      <Route path="/about">
-        <RollbarContext context="/about">
-          <About />
-        </RollbarContext>
-      </Route>
-      <Route path="/contacts/:id">
-        <RollbarContext context="contacts/details">
-          <ContactDetails />
-        </RollbarContext>
-      </Route>
-      <Route path="/contacts">
-        <RollbarContext context="contacts">
-          <ContactsList />
-        </RollbarContext>
-      </Route>
-    </Switch>
+    <Routes>
+      <Route
+        path="/about"
+        element={
+          <RollbarContext context="/about">
+            <About />
+          </RollbarContext>
+        }
+      />
+      <Route
+        path="/contacts/:id"
+        element={
+          <RollbarContext context="contacts/details">
+            <ContactDetails />
+          </RollbarContext>
+        }
+      />
+      <Route
+        path="/contacts"
+        element={
+          <RollbarContext context="contacts">
+            <ContactsList />
+          </RollbarContext>
+        }
+      />
+    </Routes>
   </Router>
 );
 
 function Contacts(props) {
   return (
-    <Route path="/about">
-      <RollbarContext context="/about">…</RollbarContext>
-    </Route>
+    <Routes>
+      <Route
+        path="/about"
+        element={<RollbarContext context="/about">…</RollbarContext>}
+      />
+    </Routes>
   );
 }
 
