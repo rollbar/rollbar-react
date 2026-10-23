@@ -8,6 +8,7 @@ import { isRollbarInstance } from './utils';
 import {
   abandonGlobalCapture,
   claimGlobalCapture,
+  manageGlobalCapture,
   mountGlobalCapture,
   unmountGlobalCapture,
 } from './global-capture';
@@ -101,7 +102,7 @@ export class Provider extends Component {
           throw e;
         }
         if (claim) {
-          claim.rollbar = this.rollbar;
+          manageGlobalCapture(claim, this.rollbar);
           this.captureClaim = claim;
         }
       }

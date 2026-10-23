@@ -1,15 +1,28 @@
 import React, { StrictMode, ReactNode } from 'react';
 import { render } from '@testing-library/react';
 import Rollbar from 'rollbar';
-import { Provider, useRollbar } from '../rollbar-react';
+import {
+  Provider,
+  useRollbar,
+  useRollbarConfiguration,
+} from '../rollbar-react';
+
+const CAPTURE_OFF = {
+  captureUncaught: false,
+  captureUnhandledRejections: false,
+};
+
+const CAPTURE_ON = {
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+};
 
 // Each config records the uncaught items its instance tried to send.
-function makeConfig() {
+function makeConfig(capture = true) {
   const reports: unknown[] = [];
   const config: Rollbar.Configuration = {
     accessToken: 'POST_CLIENT_ITEM_TOKEN',
-    captureUncaught: true,
-    captureUnhandledRejections: true,
+    ...(capture && CAPTURE_ON),
     checkIgnore: (isUncaught, args) => {
       if (isUncaught) reports.push(args);
       return true; // never send
@@ -51,6 +64,12 @@ async function rejectUnhandled() {
   window.dispatchEvent(event);
   await settle();
 }
+
+// Applies `config` to the enclosing Provider's instance on every render.
+const Configure = ({ config }: { config: Rollbar.Configuration }) => {
+  useRollbarConfiguration(config);
+  return null;
+};
 
 // Rendering its children again after an error throws away the first attempt,
 // including any Provider inside it, which never mounts.
@@ -369,5 +388,109 @@ describe('Provider global capture', () => {
     expect(instances[0].options.captureUncaught).toBe(true);
     expect(instances[1].options.captureUncaught).toBe(false);
     expect(instances[1].options.accessToken).toBe('POST_CLIENT_ITEM_TOKEN');
+  });
+
+  it('keeps a Provider that opted out off when the owner unmounts', async () => {
+    const first = makeConfig();
+    const second = makeConfig();
+    const App = ({ showFirst }: { showFirst: boolean }) => (
+      <>
+        {showFirst && (
+          <Provider config={first.config}>
+            <div />
+          </Provider>
+        )}
+        <Provider config={second.config}>
+          <Configure config={CAPTURE_OFF} />
+        </Provider>
+      </>
+    );
+
+    const { rerender } = render(<App showFirst />);
+    rerender(<App showFirst={false} />);
+    await throwUncaught();
+    await rejectUnhandled();
+
+    // Nobody else wants capture, so the unmounted owner keeps it.
+    expect(first.reports).toHaveLength(2);
+    expect(second.reports).toHaveLength(0);
+  });
+
+  it('hands capture to the next Provider when the owner opts out', async () => {
+    const first = makeConfig();
+    const second = makeConfig();
+    const App = ({ optOut }: { optOut: boolean }) => (
+      <>
+        <Provider config={first.config}>
+          {optOut && <Configure config={CAPTURE_OFF} />}
+        </Provider>
+        <Provider config={second.config}>
+          <div />
+        </Provider>
+      </>
+    );
+
+    const { rerender } = render(<App optOut={false} />);
+    rerender(<App optOut />);
+    await throwUncaught();
+    await rejectUnhandled();
+
+    expect(first.reports).toHaveLength(0);
+    expect(second.reports).toHaveLength(2);
+  });
+
+  it('keeps a Provider that opts in off while another owns capture', async () => {
+    const first = makeConfig();
+    const second = makeConfig(false);
+    const App = ({ showFirst }: { showFirst: boolean }) => (
+      <>
+        {showFirst && (
+          <Provider config={first.config}>
+            <div />
+          </Provider>
+        )}
+        <Provider config={second.config}>
+          <Configure config={CAPTURE_ON} />
+        </Provider>
+      </>
+    );
+
+    const { rerender } = render(<App showFirst />);
+    await throwUncaught();
+    await rejectUnhandled();
+
+    expect(first.reports).toHaveLength(2);
+    expect(second.reports).toHaveLength(0);
+
+    rerender(<App showFirst={false} />);
+    await throwUncaught();
+    await rejectUnhandled();
+
+    expect(first.reports).toHaveLength(2);
+    expect(second.reports).toHaveLength(2);
+  });
+
+  it('stops capturing when the only owner opts out and resumes when it opts in', async () => {
+    const { config, reports } = makeConfig();
+    let rollbar: Rollbar | undefined;
+    const Consumer = () => {
+      rollbar = useRollbar();
+      return null;
+    };
+
+    render(
+      <Provider config={config}>
+        <Consumer />
+      </Provider>,
+    );
+    rollbar?.configure(CAPTURE_OFF);
+    await throwUncaught();
+
+    expect(reports).toHaveLength(0);
+
+    rollbar?.configure(CAPTURE_ON);
+    await throwUncaught();
+
+    expect(reports).toHaveLength(1);
   });
 });

@@ -12,9 +12,9 @@ function load() {
 }
 
 // A stand-in for a Provider that creates its instance from `config`.
-function provider(capture, parent = null) {
+function provider(capture, parent = null, captureUncaught = true) {
   const { options, claim } = capture.claimGlobalCapture(
-    { captureUncaught: true },
+    { captureUncaught },
     parent?.claim,
   );
   const rollbar = {
@@ -25,7 +25,7 @@ function provider(capture, parent = null) {
       }
     },
   };
-  claim.rollbar = rollbar;
+  capture.manageGlobalCapture(claim, rollbar);
   return {
     claim,
     rollbar,
@@ -95,5 +95,59 @@ describe('global capture coordination', () => {
     outer.unmount();
 
     expect(capturing(outer, inner, sibling)).toEqual([false, false, true]);
+  });
+
+  it('keeps an opt-out made before StrictMode remounts', () => {
+    const capture = load();
+    const first = provider(capture);
+    const second = provider(capture);
+
+    // A child of the second Provider opts out while it renders.
+    second.rollbar.configure({ captureUncaught: false });
+    first.mount();
+    second.mount();
+    // React 18 and 19 StrictMode unmount and remount in the same order.
+    first.unmount();
+    second.unmount();
+    first.mount();
+    second.mount();
+    first.unmount();
+
+    expect(capturing(first, second)).toEqual([true, false]);
+  });
+
+  it('keeps an opt-in made before StrictMode remounts', () => {
+    const capture = load();
+    const first = provider(capture);
+    const second = provider(capture, null, false);
+
+    // A child of the second Provider opts in while it renders.
+    second.rollbar.configure({ captureUncaught: true });
+    first.mount();
+    second.mount();
+    first.unmount();
+    second.unmount();
+    first.mount();
+    second.mount();
+
+    expect(capturing(first, second)).toEqual([true, false]);
+
+    first.unmount();
+
+    expect(capturing(first, second)).toEqual([false, true]);
+  });
+
+  it('hands capture to the outer of nested Providers when the owner opts out', () => {
+    const capture = load();
+    const first = provider(capture);
+    const outer = provider(capture);
+    const inner = provider(capture, outer);
+
+    first.mount();
+    inner.mount();
+    outer.mount();
+    first.rollbar.configure({ captureUncaught: false });
+
+    expect(capturing(first, outer, inner)).toEqual([false, true, false]);
   });
 });
