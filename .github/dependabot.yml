@@ -6,6 +6,12 @@
 # `open-pull-requests-limit: 0` keeps routine version updates off; it does
 # not apply to security updates. The `security` groups batch every security
 # fix for an ecosystem into one PR per directory instead of one per package.
+#
+# Schedules use the most frequent option available: an hourly `cron`.
+# The named intervals stop at `daily`, and that only runs on weekdays.
+# GitHub accepts sub-daily cron expressions but has been seen to run them
+# about once a day. The schedule only drives version updates. Security
+# updates are raised when an alert opens, whatever the schedule says.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -13,7 +19,8 @@ updates:
       - '/'
       - '/examples/*'
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: '0 * * * *'
     open-pull-requests-limit: 0
     groups:
       security:
@@ -24,7 +31,8 @@ updates:
   - package-ecosystem: github-actions
     directory: '/'
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: '0 * * * *'
     open-pull-requests-limit: 0
     groups:
       security:
