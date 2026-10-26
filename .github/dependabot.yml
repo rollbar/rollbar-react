@@ -1,0 +1,33 @@
+# Security updates only. Without this file Dependabot opens one PR per
+# vulnerable package per directory, so a single advisory against a shared
+# dev dependency (vite, vitest, next, ...) fans out into several PRs that
+# touch the same lockfiles and conflict with each other.
+#
+# `open-pull-requests-limit: 0` keeps routine version updates off; it does
+# not apply to security updates. The `security` groups batch every security
+# fix for an ecosystem into one PR per directory instead of one per package.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - '/'
+      - '/examples/*'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns:
+          - '*'
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns:
+          - '*'
