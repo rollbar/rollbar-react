@@ -7,11 +7,11 @@
 # not apply to security updates. The `security` groups batch every security
 # fix for an ecosystem into one PR per directory instead of one per package.
 #
-# Schedules use the most frequent option available: an hourly `cron`.
-# The named intervals stop at `daily`, and that only runs on weekdays.
-# GitHub accepts sub-daily cron expressions but has been seen to run them
-# about once a day. The schedule only drives version updates. Security
-# updates are raised when an alert opens, whatever the schedule says.
+# Schedules use the most frequent option Dependabot allows: a `cron` that
+# runs every day. Dependabot rejects cron expressions that fire more often
+# than every 24 hours, and `interval: daily` skips weekends. The schedule
+# only drives version updates. Security updates are raised when an alert
+# opens, whatever the schedule says.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -20,7 +20,7 @@ updates:
       - '/examples/*'
     schedule:
       interval: cron
-      cronjob: '0 * * * *'
+      cronjob: '0 0 * * *'
     open-pull-requests-limit: 0
     groups:
       security:
@@ -32,7 +32,7 @@ updates:
     directory: '/'
     schedule:
       interval: cron
-      cronjob: '0 * * * *'
+      cronjob: '0 0 * * *'
     open-pull-requests-limit: 0
     groups:
       security:
