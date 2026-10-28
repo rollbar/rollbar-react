@@ -1,0 +1,41 @@
+# Security updates only. Without this file Dependabot opens one PR per
+# vulnerable package per directory, so a single advisory against a shared
+# dev dependency (vite, vitest, next, ...) fans out into several PRs that
+# touch the same lockfiles and conflict with each other.
+#
+# `open-pull-requests-limit: 0` keeps routine version updates off; it does
+# not apply to security updates. The `security` groups batch every security
+# fix for an ecosystem into one PR per directory instead of one per package.
+#
+# Schedules use the most frequent option Dependabot allows: a `cron` that
+# runs every day. Dependabot rejects cron expressions that fire more often
+# than every 24 hours, and `interval: daily` skips weekends. The schedule
+# only drives version updates. Security updates are raised when an alert
+# opens, whatever the schedule says.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - '/'
+      - '/examples/*'
+    schedule:
+      interval: cron
+      cronjob: '0 0 * * *'
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns:
+          - '*'
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: cron
+      cronjob: '0 0 * * *'
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns:
+          - '*'
