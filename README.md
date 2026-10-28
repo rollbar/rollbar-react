@@ -167,6 +167,8 @@ We suggest you create a single instance for use server side, to be certain there
 
 There's a fully functional [example](./examples/nextjs-approuter) that showcases the many ways in which you can integrate Rollbar into your modern web-app leveraging React Server Components and the Next.js App Router.
 
+To report errors from `proxy.ts` or `middleware.ts`, use the server instance from a Node.js runtime. In Edge middleware, `rollbar` resolves to its browser build, and the API rejects those reports when they use a `post_server_item` token. See [Reporting errors from `proxy.ts`](./examples/nextjs-approuter/README.md#reporting-errors-from-proxyts-formerly-middlewarets) in the example.
+
 ## Components
 
 The following components are available as named imports from `@rollbar/react`.
