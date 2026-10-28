@@ -198,6 +198,14 @@ export function App(props) {
 }
 ```
 
+The instance is created when the `Provider` first renders, so React's `StrictMode` doesn't create a second one.
+
+If more than one `Provider` creates an instance with `captureUncaught` or `captureUnhandledRejections` enabled, only
+the first one to render captures those global errors, so each error is reported once. When it unmounts, the next one
+takes over. Turning those options off or on later with `configure` or `useRollbarConfiguration` works the same way: a
+`Provider` that turns capture off hands it to the next one, and one that turns it on captures once no other `Provider`
+does. Instances you pass with the `instance` prop aren't coordinated this way, so create them once and share them.
+
 #### Instance Usage
 
 Sometimes you may need to instantiate an instance of Rollbar before adding it to your App tree. In that case use the
