@@ -1,266 +1,159 @@
 // window.onerror and unhandledrejection are shared by the whole page, but
-// every Rollbar instance that captures them adds its own handler. With several
+// every Rollbar instance that captures them adds its own handler, and
+// rollbar.js only filters duplicates within one instance. With several
 // Providers each building an instance from `config`, one error was reported
-// once per Provider. So among the instances Providers create, only one owns
-// each kind of capture at a time; the others have it turned off until the
-// owner unmounts or opts out. Instances passed in with the `instance` prop
-// aren't managed.
+// once per Provider.
 //
-// The app can change the capture options at any time through `configure`
-// (directly or with useRollbarConfiguration), so each managed instance's
-// `configure` is wrapped: capture options passed to it are recorded as what
-// that Provider wants, and applied only while it owns that kind of capture.
+// So each instance a Provider creates decides, when its handler runs, whether
+// it is the one to report. Of the instances reporting to the same access token
+// that capture that kind of error, that is the one whose Provider was created
+// first among those mounted. While none is mounted, it is the one created
+// last among those that have mounted before, or failing that among those that
+// haven't mounted yet (or never will, like StrictMode's extra construction).
+// The decision is made from the instances' current options every time, so
+// options changed with `configure` are respected and nothing about it depends
+// on the order Providers mounted or unmounted in. The app's options are left
+// alone. Instances passed in with the `instance` prop aren't managed.
 
-const CAPTURE_OPTIONS = {
-  uncaught: ['captureUncaught', 'handleUncaughtExceptions'],
-  rejections: ['captureUnhandledRejections', 'handleUnhandledRejections'],
+const KINDS = {
+  uncaught: {
+    handler: 'handleUncaughtException',
+    options: ['captureUncaught', 'handleUncaughtExceptions'],
+  },
+  rejections: {
+    handler: 'handleUnhandledRejection',
+    options: ['captureUnhandledRejections', 'handleUnhandledRejections'],
+  },
 };
 
-const KINDS = Object.keys(CAPTURE_OPTIONS);
+// Claims that are mounted or whose instance captures something. Window
+// already keeps the latter instances alive through their handlers.
+let claims = [];
+// Managed instance → { handlers: its own handlers, latest: its newest claim }.
+const managed = new WeakMap();
+let created = 0;
 
-const owners = { uncaught: null, rejections: null };
-// Mounted claims, in the order they mounted.
-const mounted = [];
-
-function captureOff(kind) {
-  const off = {};
-  CAPTURE_OPTIONS[kind].forEach((key) => {
-    off[key] = false;
-  });
-  return off;
+function captures(claim, kind) {
+  const options = claim.rollbar.options || {};
+  return (
+    options.enabled !== false && KINDS[kind].options.some((key) => options[key])
+  );
 }
 
-// Records the capture options in `options` as what `claim` wants. Returns the
-// kinds they belong to.
-function request(claim, options) {
-  return KINDS.filter((kind) => {
-    const keys = CAPTURE_OPTIONS[kind].filter((key) => key in options);
-    keys.forEach((key) => {
-      claim.requested[kind][key] = options[key];
-    });
-    return keys.length > 0;
-  });
+function capturesAny(claim) {
+  return Object.keys(KINDS).some((kind) => captures(claim, kind));
 }
 
-function wants(claim, kind) {
-  return CAPTURE_OPTIONS[kind].some((key) => claim.requested[kind][key]);
+function project(claim) {
+  return claim.rollbar.options?.accessToken;
 }
 
-// These bypass the wrapper, so they don't count as the app's requests.
-function enable(claim, kind) {
-  claim.configure?.(claim.requested[kind]);
-}
-
-function disable(claim, kind) {
-  claim.configure?.(captureOff(kind));
-}
-
-function takeOver(claim, kind) {
-  const previous = owners[kind];
-  if (previous && previous !== claim) {
-    disable(previous, kind);
+function register(claim) {
+  if (!claims.includes(claim)) {
+    claims.push(claim);
   }
-  owners[kind] = claim;
-  enable(claim, kind);
 }
 
-function isAncestor(other, claim) {
-  for (let parent = claim.parent; parent; parent = parent.parent) {
-    if (parent === other) {
-      return true;
+// The claim whose instance reports `kind` for the project `self` reports to.
+function reporter(self, kind) {
+  const candidates = claims
+    .concat(self)
+    .filter(
+      (claim) => captures(claim, kind) && project(claim) === project(self),
+    );
+  const mounted = candidates.filter((claim) => claim.mounted);
+  if (mounted.length) {
+    return mounted.reduce((a, b) => (b.seq < a.seq ? b : a));
+  }
+  const unmounted = candidates.filter((claim) => claim.hasMounted);
+  return (unmounted.length ? unmounted : candidates).reduce(
+    (a, b) => (!a || b.seq > a.seq ? b : a),
+    null,
+  );
+}
+
+// In Chrome, rollbar.js can't see an anonymous (cross-origin) error in
+// onerror. Every instance counts it there, and whichever instance set
+// Error.prepareStackTrace last reports it from there with `_isAnonymous` set.
+// Mirrors the check in rollbar.js's handleUncaughtException.
+function isAnonymousProbe(rollbar, url, error) {
+  return (
+    rollbar.options?.inspectAnonymousErrors &&
+    rollbar.isChrome &&
+    error === null &&
+    url === ''
+  );
+}
+
+function gate(rollbar, record, kind) {
+  const original = rollbar[KINDS[kind].handler];
+  record.handlers[kind] = original;
+  rollbar[KINDS[kind].handler] = function (...args) {
+    if (kind === 'uncaught') {
+      const [, url, , , error] = args;
+      if (isAnonymousProbe(rollbar, url, error)) {
+        return original.apply(rollbar, args);
+      }
+      if (error?._isAnonymous) {
+        // Only this instance received it, so hand it to the reporter.
+        const chosen = reporter(record.latest, kind);
+        const target = chosen ? chosen.rollbar : rollbar;
+        return managed.get(target).handlers[kind].apply(target, args);
+      }
     }
-  }
-  return false;
-}
-
-// The outermost of `claim` and its enclosing Providers' claims that wants
-// `kind` and passes `eligible`.
-function outermost(claim, kind, eligible = () => true) {
-  let found = claim;
-  for (let parent = claim.parent; parent; parent = parent.parent) {
-    if (wants(parent, kind) && eligible(parent)) {
-      found = parent;
+    const chosen = reporter(record.latest, kind);
+    if (chosen && chosen.rollbar !== rollbar) {
+      return undefined;
     }
-  }
-  return found;
-}
-
-// Gives `kind` from its owner `claim` to the first other mounted Provider that
-// wants it and that `skip` doesn't exclude, or to the outermost such Provider
-// around it, so nested Providers keep capture with the outer one. Returns
-// false if there is none.
-function handOff(claim, kind, skip = () => false) {
-  const eligible = (other) =>
-    other !== claim &&
-    mounted.includes(other) &&
-    wants(other, kind) &&
-    !skip(other);
-  const next = mounted.find(eligible);
-  if (!next) {
-    return false;
-  }
-  takeOver(outermost(next, kind, eligible), kind);
-  return true;
-}
-
-// After the app changed what `claim` wants for `kind`.
-function reconcile(claim, kind) {
-  const owner = owners[kind];
-  if (owner === claim) {
-    if (wants(claim, kind)) {
-      enable(claim, kind);
-    } else if (!handOff(claim, kind)) {
-      disable(claim, kind);
-      owners[kind] = null;
-    }
-    return;
-  }
-  // Otherwise it stays off unless nobody else captures this kind.
-  if (
-    wants(claim, kind) &&
-    claim.state !== 'unmounted' &&
-    (!owner || owner.state === 'unmounted')
-  ) {
-    takeOver(claim, kind);
-  }
-}
-
-// Call before constructing the instance, with the claim of the nearest
-// enclosing Provider, if any. Returns the options to construct it with (global
-// capture turned off where another instance already owns it) and a claim to
-// pass to the other functions.
-export function claimGlobalCapture(options, parent = null) {
-  if (typeof window === 'undefined' || !options) {
-    return { options, claim: null };
-  }
-
-  const claim = {
-    configure: null,
-    state: 'pending',
-    requested: { uncaught: {}, rejections: {} },
-    replaced: {},
-    parent,
+    return original.apply(rollbar, args);
   };
-  let ctorOptions = options;
-
-  request(claim, options).forEach((kind) => {
-    if (!wants(claim, kind)) {
-      return;
-    }
-    const owner = owners[kind];
-    if (!owner) {
-      owners[kind] = claim;
-      claim.replaced[kind] = null;
-    } else if (owner.state === 'unmounted') {
-      // Its handler is still installed, so it has to be switched off.
-      disable(owner, kind);
-      owners[kind] = claim;
-      claim.replaced[kind] = owner;
-    } else {
-      ctorOptions = { ...ctorOptions, ...captureOff(kind) };
-    }
-  });
-
-  return { options: ctorOptions, claim };
 }
 
-// Call once the instance is constructed.
-export function manageGlobalCapture(claim, rollbar) {
-  if (!claim) {
-    return;
+// Call once a Provider has created `rollbar` from its config. Returns a claim
+// to pass to the other functions.
+export function manageGlobalCapture(rollbar) {
+  if (typeof window === 'undefined' || !rollbar) {
+    return null;
   }
-  const configure = rollbar?.configure;
-  if (typeof configure !== 'function') {
-    return;
-  }
-  claim.configure = (options) => configure.call(rollbar, options);
-
-  rollbar.configure = (options, ...rest) => {
-    if (!options) {
-      return configure.call(rollbar, options, ...rest);
-    }
-    const kinds = request(claim, options);
-    const others = { ...options };
-    kinds.forEach((kind) => {
-      CAPTURE_OPTIONS[kind].forEach((key) => {
-        delete others[key];
-      });
+  let record = managed.get(rollbar);
+  if (!record) {
+    record = { handlers: {}, latest: null };
+    Object.keys(KINDS).forEach((kind) => {
+      if (typeof rollbar[KINDS[kind].handler] === 'function') {
+        gate(rollbar, record, kind);
+      }
     });
-    const result = configure.call(rollbar, others, ...rest);
-    kinds.forEach((kind) => reconcile(claim, kind));
-    return result;
-  };
+    managed.set(rollbar, record);
+  }
+  const claim = { rollbar, seq: created++, mounted: false, hasMounted: false };
+  record.latest = claim;
+  if (capturesAny(claim)) {
+    register(claim);
+  }
+  return claim;
 }
 
 export function mountGlobalCapture(claim) {
   if (!claim) {
     return;
   }
-  claim.state = 'mounted';
-  if (!mounted.includes(claim)) {
-    mounted.push(claim);
-  }
-
-  KINDS.forEach((kind) => {
-    const owner = owners[kind];
-    if (owner === claim || !wants(claim, kind)) {
-      return;
-    }
-    // Mounting runs children before parents and earlier siblings before later
-    // ones, so of the Providers rendered in this commit only an ancestor mounts
-    // after this one, and it keeps capture. Any other owner still pending was
-    // rendered in a pass React threw away (or hasn't committed), so it is
-    // replaced like an unmounted one: by the outermost enclosing Provider
-    // that wants this kind, which is mounting in this same commit.
-    if (
-      !owner ||
-      owner.state === 'unmounted' ||
-      (owner.state === 'pending' && !isAncestor(owner, claim))
-    ) {
-      takeOver(outermost(claim, kind), kind);
-    }
-  });
+  claim.mounted = true;
+  claim.hasMounted = true;
+  register(claim);
 }
 
 export function unmountGlobalCapture(claim) {
   if (!claim) {
     return;
   }
-  claim.state = 'unmounted';
-  const index = mounted.indexOf(claim);
-  if (index !== -1) {
-    mounted.splice(index, 1);
+  claim.mounted = false;
+  // Other unmounted claims for the same instance (a shared one, say) would
+  // decide nothing this one doesn't.
+  claims = claims.filter(
+    (other) =>
+      other === claim || other.mounted || other.rollbar !== claim.rollbar,
+  );
+  if (!capturesAny(claim)) {
+    claims = claims.filter((other) => other !== claim);
   }
-
-  KINDS.forEach((kind) => {
-    if (owners[kind] !== claim) {
-      return;
-    }
-    // Providers nested inside this one unmount with it (or, under StrictMode
-    // and Suspense, disappear and reappear with it), so they are skipped.
-    handOff(claim, kind, (other) => isAncestor(claim, other));
-    // With nobody to hand to, the owner keeps capturing, as an unmounted
-    // Provider's instance always has. The next Provider to claim or mount
-    // takes over.
-  });
-}
-
-// Call instead of the others when constructing the instance fails, to give
-// capture back to whichever owner the claim replaced.
-export function abandonGlobalCapture(claim) {
-  if (!claim) {
-    return;
-  }
-  claim.state = 'unmounted';
-
-  Object.keys(claim.replaced).forEach((kind) => {
-    if (owners[kind] !== claim) {
-      return;
-    }
-    const previous = claim.replaced[kind];
-    owners[kind] = previous;
-    if (previous) {
-      enable(previous, kind);
-    }
-  });
 }

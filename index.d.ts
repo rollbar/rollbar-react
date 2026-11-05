@@ -53,7 +53,12 @@ export interface ProviderProps {
   instance?: Rollbar;
 }
 
-export class Provider extends Component<ProviderProps> {}
+interface ProviderState {
+  rollbar: Rollbar;
+  options: Rollbar.Configuration;
+}
+
+export class Provider extends Component<ProviderProps, ProviderState> {}
 
 declare const RollbarInstance: unique symbol;
 declare const BaseOptions: unique symbol;

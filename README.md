@@ -198,13 +198,13 @@ export function App(props) {
 }
 ```
 
-The instance is created when the `Provider` first renders, so React's `StrictMode` doesn't create a second one.
-
-If more than one `Provider` creates an instance with `captureUncaught` or `captureUnhandledRejections` enabled, only
-the first one to render captures those global errors, so each error is reported once. When it unmounts, the next one
-takes over. Turning those options off or on later with `configure` or `useRollbarConfiguration` works the same way: a
-`Provider` that turns capture off hands it to the next one, and one that turns it on captures once no other `Provider`
-does. Instances you pass with the `instance` prop aren't coordinated this way, so create them once and share them.
+If more than one `Provider` creates an instance with `captureUncaught` or `captureUnhandledRejections` enabled for the
+same `accessToken`, each uncaught error or unhandled rejection is reported once, by the first of them to be created
+that is still mounted, rather than once per `Provider`. The same applies to the second instance React's `StrictMode`
+creates in development. `Provider`s with different access tokens each report every error to their own project. The
+capture options are read when an error happens, so turning them off or on later with `configure` or
+`useRollbarConfiguration` decides which `Provider` reports. Instances you pass with the `instance` prop aren't
+coordinated this way, so create them once and share them.
 
 #### Instance Usage
 

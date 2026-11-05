@@ -4,10 +4,8 @@ import React, { Component, createContext } from 'react';
 import PropTypes from 'prop-types';
 import Rollbar from 'rollbar';
 import invariant from 'tiny-invariant';
-import { isRollbarInstance } from './utils';
+import { isRollbarInstance, value } from './utils';
 import {
-  abandonGlobalCapture,
-  claimGlobalCapture,
   manageGlobalCapture,
   mountGlobalCapture,
   unmountGlobalCapture,
@@ -19,11 +17,6 @@ Context.displayName = 'Rollbar';
 export const RollbarInstance = Symbol('RollbarInstance');
 export const BaseOptions = Symbol('BaseOptions');
 export const RollbarCtor = Symbol('RollbarCtor');
-
-// Carries the enclosing Provider's global capture claim. Kept apart from
-// `Context`, whose value is new on every render, so that nested Providers
-// only subscribe to a value that doesn't change after their first render.
-const CaptureClaimContext = createContext(null);
 
 export function getRollbarFromContext(context) {
   const { [RollbarInstance]: rollbar } = context;
@@ -70,49 +63,19 @@ export class Provider extends Component {
     children: PropTypes.node,
   };
 
-  static contextType = CaptureClaimContext;
-
   constructor(props) {
     super(props);
-    const { instance } = this.props;
+    const { config, Rollbar: ctor = Rollbar, instance } = this.props;
     invariant(
       !instance || isRollbarInstance(instance),
       '`instance` must be a configured instance of Rollbar',
     );
-  }
-
-  // Created on first render rather than in the constructor: in development,
-  // StrictMode constructs class components twice and throws one away, and a
-  // Rollbar instance built there would keep its global handlers regardless.
-  getRollbar() {
-    if (!this.rollbar) {
-      const { config, Rollbar: ctor = Rollbar, instance } = this.props;
-      const options = typeof config === 'function' ? config() : config;
-      if (instance) {
-        this.rollbar = instance;
-      } else {
-        const { options: ctorOptions, claim } = claimGlobalCapture(
-          options,
-          this.parentClaim(),
-        );
-        try {
-          this.rollbar = new ctor(ctorOptions);
-        } catch (e) {
-          abandonGlobalCapture(claim);
-          throw e;
-        }
-        if (claim) {
-          manageGlobalCapture(claim, this.rollbar);
-          this.captureClaim = claim;
-        }
-      }
-      this.options = options;
-    }
-    return this.rollbar;
-  }
-
-  parentClaim() {
-    return this.context;
+    const options = value(config);
+    const rollbar = instance || new ctor(options);
+    // So that several Providers, or StrictMode's second construction, report
+    // each global error once.
+    this.captureClaim = instance ? null : manageGlobalCapture(rollbar);
+    this.state = { rollbar, options };
   }
 
   componentDidMount() {
@@ -125,23 +88,18 @@ export class Provider extends Component {
 
   render() {
     const { children, Rollbar: ctor = Rollbar } = this.props;
-    const rollbar = this.getRollbar();
-    const { options } = this;
+    const { rollbar, options } = this.state;
 
     return (
-      <CaptureClaimContext.Provider
-        value={this.captureClaim ?? this.parentClaim()}
+      <Context.Provider
+        value={{
+          [RollbarInstance]: rollbar,
+          [BaseOptions]: options,
+          [RollbarCtor]: ctor,
+        }}
       >
-        <Context.Provider
-          value={{
-            [RollbarInstance]: rollbar,
-            [BaseOptions]: options,
-            [RollbarCtor]: ctor,
-          }}
-        >
-          {children}
-        </Context.Provider>
-      </CaptureClaimContext.Provider>
+        {children}
+      </Context.Provider>
     );
   }
 }

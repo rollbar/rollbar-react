@@ -17,11 +17,22 @@ const CAPTURE_ON = {
   captureUnhandledRejections: true,
 };
 
+// Capture is coordinated per access token, so each test gets its own and
+// starts as a page with no Providers does.
+let tokens = 0;
+let accessToken = '';
+
+beforeEach(() => {
+  tokens += 1;
+  accessToken = `POST_CLIENT_ITEM_TOKEN_${tokens}`;
+  window.onerror = null;
+});
+
 // Each config records the uncaught items its instance tried to send.
-function makeConfig(capture = true) {
+function makeConfig(capture = true, token = accessToken) {
   const reports: unknown[] = [];
   const config: Rollbar.Configuration = {
-    accessToken: 'POST_CLIENT_ITEM_TOKEN',
+    accessToken: token,
     ...(capture && CAPTURE_ON),
     checkIgnore: (isUncaught, args) => {
       if (isUncaught) reports.push(args);
@@ -131,11 +142,9 @@ describe('Provider global capture', () => {
     expect(providers.map(({ reports }) => reports.length)).toEqual([2, 0, 0]);
   });
 
-  it('builds one instance under StrictMode', async () => {
-    const { config, reports } = makeConfig();
-    const ctor = jest.fn(
-      (options: Rollbar.Configuration) => new Rollbar(options),
-    );
+  it('reports once, from the provided instance, under StrictMode', async () => {
+    const { config } = makeConfig();
+    const { ctor, reports } = countingRollbar();
     let provided: Rollbar | undefined;
     const Consumer = () => {
       provided = useRollbar();
@@ -151,10 +160,82 @@ describe('Provider global capture', () => {
     );
 
     await throwUncaught();
+    await rejectUnhandled();
 
-    expect(ctor).toHaveBeenCalledTimes(1);
-    expect(provided).toBe(ctor.mock.results[0].value);
-    expect(reports).toHaveLength(1);
+    // StrictMode constructs the Provider twice and keeps one.
+    expect(ctor).toHaveBeenCalledTimes(2);
+    const kept = ctor.mock.results.findIndex(({ value }) => value === provided);
+    expect(kept).not.toBe(-1);
+    expect(reports[kept]).toBe(2);
+    expect(reports.reduce((a, b) => a + b)).toBe(2);
+  });
+
+  it('reports to each project once', async () => {
+    const a = makeConfig(true, `${accessToken}_A`);
+    const otherA = makeConfig(true, `${accessToken}_A`);
+    const b = makeConfig(true, `${accessToken}_B`);
+    render(
+      <>
+        {[a, otherA, b].map(({ config }, i) => (
+          <Provider key={i} config={config}>
+            <div />
+          </Provider>
+        ))}
+      </>,
+    );
+
+    await throwUncaught();
+    await rejectUnhandled();
+
+    expect([a, otherA, b].map(({ reports }) => reports.length)).toEqual([
+      2, 0, 2,
+    ]);
+  });
+
+  it('reports once with an instance shared through a custom constructor', async () => {
+    const { config, reports } = makeConfig();
+    const shared = new Rollbar(config);
+    const ctor = jest.fn(() => shared);
+    const App = ({ showFirst }: { showFirst: boolean }) => (
+      <>
+        {showFirst && (
+          <Provider Rollbar={ctor as unknown as typeof Rollbar} config={config}>
+            <div />
+          </Provider>
+        )}
+        <Provider Rollbar={ctor as unknown as typeof Rollbar} config={config}>
+          <div />
+        </Provider>
+      </>
+    );
+
+    const { rerender } = render(<App showFirst />);
+    await throwUncaught();
+    rerender(<App showFirst={false} />);
+    await throwUncaught();
+    await rejectUnhandled();
+
+    expect(reports).toHaveLength(3);
+  });
+
+  it('keeps the instance and options in state', () => {
+    const { config } = makeConfig();
+    const ref = React.createRef<Provider>();
+    let provided: Rollbar | undefined;
+    const Consumer = () => {
+      provided = useRollbar();
+      return null;
+    };
+
+    render(
+      <Provider ref={ref} config={config}>
+        <Consumer />
+      </Provider>,
+    );
+
+    const state = ref.current?.state as { rollbar: Rollbar; options: unknown };
+    expect(state.rollbar).toBe(provided);
+    expect(state.options).toBe(config);
   });
 
   it('hands capture to the next Provider when the owner unmounts', async () => {
@@ -365,7 +446,7 @@ describe('Provider global capture', () => {
     expect(renders).toBe(1);
   });
 
-  it('turns capture off only where another instance owns it', () => {
+  it("leaves the app's options and configure alone", () => {
     const owner = makeConfig();
     const other = makeConfig();
     const instances: Rollbar[] = [];
@@ -384,10 +465,56 @@ describe('Provider global capture', () => {
         </Provider>
       </>,
     );
+    const configure = jest.spyOn(instances[1], 'configure');
+    instances[1].configure({ captureUncaught: true, payload: {} });
 
-    expect(instances[0].options.captureUncaught).toBe(true);
-    expect(instances[1].options.captureUncaught).toBe(false);
-    expect(instances[1].options.accessToken).toBe('POST_CLIENT_ITEM_TOKEN');
+    expect(instances.map((rollbar) => rollbar.options.captureUncaught)).toEqual(
+      [true, true],
+    );
+    expect(instances[0].configure).toBe(Rollbar.prototype.configure);
+    expect(configure).toHaveBeenCalledTimes(1);
+    expect(configure).toHaveBeenCalledWith({
+      captureUncaught: true,
+      payload: {},
+    });
+  });
+
+  it('gives capture to an outer Provider that opts in', async () => {
+    const outer = makeConfig(false);
+    const inner = makeConfig();
+    const App = ({ optIn }: { optIn: boolean }) => (
+      <Provider config={outer.config}>
+        <Provider config={inner.config}>
+          <div />
+        </Provider>
+        {optIn && <Configure config={CAPTURE_ON} />}
+      </Provider>
+    );
+
+    const { rerender } = render(<App optIn={false} />);
+    await throwUncaught();
+    rerender(<App optIn />);
+    await throwUncaught();
+
+    expect(outer.reports).toHaveLength(1);
+    expect(inner.reports).toHaveLength(1);
+  });
+
+  it('reports once after every Provider unmounts', async () => {
+    const providers = [makeConfig(), makeConfig(false), makeConfig()];
+    const { unmount } = render(
+      <>
+        {providers.map(({ config }, i) => (
+          <Provider key={i} config={config}>
+            <div />
+          </Provider>
+        ))}
+      </>,
+    );
+    unmount();
+    await throwUncaught();
+
+    expect(providers.map(({ reports }) => reports.length)).toEqual([0, 0, 1]);
   });
 
   it('keeps a Provider that opted out off when the owner unmounts', async () => {
@@ -492,5 +619,54 @@ describe('Provider global capture', () => {
     await throwUncaught();
 
     expect(reports).toHaveLength(1);
+  });
+
+  describe('in Chrome', () => {
+    const { prepareStackTrace } = Error;
+
+    beforeEach(() => {
+      Object.assign(window, { chrome: { runtime: {} } });
+    });
+
+    afterEach(() => {
+      delete (window as { chrome?: unknown }).chrome;
+      Error.prepareStackTrace = prepareStackTrace;
+    });
+
+    // Chrome calls onerror without the error, then Error.prepareStackTrace,
+    // which the instance that installed its handlers last set, with it.
+    async function throwAnonymous() {
+      window.onerror?.('Script error.', '', 0, 0, null as unknown as Error);
+      Error.prepareStackTrace?.(new Error('anonymous'), []);
+      await settle();
+    }
+
+    it('reports an anonymous error once, from the reporting instance', async () => {
+      const first = makeConfig();
+      const second = makeConfig();
+      const App = ({ optOut, showSecond }: Record<string, boolean>) => (
+        <>
+          <Provider config={first.config}>
+            <Configure config={{ captureUncaught: !optOut }} />
+          </Provider>
+          {showSecond && (
+            <Provider config={second.config}>
+              <div />
+            </Provider>
+          )}
+        </>
+      );
+
+      const { rerender } = render(<App optOut={false} showSecond />);
+      await throwAnonymous();
+      rerender(<App optOut showSecond />);
+      await throwAnonymous();
+      rerender(<App optOut showSecond={false} />);
+      rerender(<App optOut={false} showSecond={false} />);
+      await throwAnonymous();
+
+      expect(first.reports).toHaveLength(2);
+      expect(second.reports).toHaveLength(1);
+    });
   });
 });
