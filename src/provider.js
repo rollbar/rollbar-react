@@ -4,7 +4,12 @@ import React, { Component, createContext } from 'react';
 import PropTypes from 'prop-types';
 import Rollbar from 'rollbar';
 import invariant from 'tiny-invariant';
-import { isRollbarInstance } from './utils';
+import { isRollbarInstance, value } from './utils';
+import {
+  manageGlobalCapture,
+  mountGlobalCapture,
+  unmountGlobalCapture,
+} from './global-capture';
 
 export const Context = createContext();
 Context.displayName = 'Rollbar';
@@ -65,14 +70,21 @@ export class Provider extends Component {
       !instance || isRollbarInstance(instance),
       '`instance` must be a configured instance of Rollbar',
     );
-    const options = typeof config === 'function' ? config() : config;
+    const options = value(config);
     const rollbar = instance || new ctor(options);
-    // TODO: use isUncaught to filter if this is 2nd Provider added
-    // unless customer wants that
+    // So that several Providers, or StrictMode's second construction, report
+    // each global error once.
+    this.captureClaim = instance ? null : manageGlobalCapture(rollbar);
     this.state = { rollbar, options };
   }
 
-  // componentDidUpdate()
+  componentDidMount() {
+    mountGlobalCapture(this.captureClaim);
+  }
+
+  componentWillUnmount() {
+    unmountGlobalCapture(this.captureClaim);
+  }
 
   render() {
     const { children, Rollbar: ctor = Rollbar } = this.props;
