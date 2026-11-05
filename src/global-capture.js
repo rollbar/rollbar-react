@@ -29,7 +29,7 @@ const KINDS = {
 // Claims that are mounted or whose instance captures something. Window
 // already keeps the latter instances alive through their handlers.
 let claims = [];
-// Managed instance → { handlers: its own handlers, latest: its newest claim }.
+// Managed instance → its own handlers, by kind.
 const managed = new WeakMap();
 let created = 0;
 
@@ -44,8 +44,8 @@ function capturesAny(claim) {
   return Object.keys(KINDS).some((kind) => captures(claim, kind));
 }
 
-function project(claim) {
-  return claim.rollbar.options?.accessToken;
+function project(rollbar) {
+  return rollbar.options?.accessToken;
 }
 
 function register(claim) {
@@ -54,13 +54,14 @@ function register(claim) {
   }
 }
 
-// The claim whose instance reports `kind` for the project `self` reports to.
-function reporter(self, kind) {
-  const candidates = claims
-    .concat(self)
-    .filter(
-      (claim) => captures(claim, kind) && project(claim) === project(self),
-    );
+// The claim whose instance reports `kind` for the project `rollbar` reports
+// to, or null if none is registered. Every instance chooses from the same
+// claims, so they all agree on it.
+function reporter(rollbar, kind) {
+  const candidates = claims.filter(
+    (claim) =>
+      captures(claim, kind) && project(claim.rollbar) === project(rollbar),
+  );
   const mounted = candidates.filter((claim) => claim.mounted);
   if (mounted.length) {
     return mounted.reduce((a, b) => (b.seq < a.seq ? b : a));
@@ -85,9 +86,9 @@ function isAnonymousProbe(rollbar, url, error) {
   );
 }
 
-function gate(rollbar, record, kind) {
+function gate(rollbar, handlers, kind) {
   const original = rollbar[KINDS[kind].handler];
-  record.handlers[kind] = original;
+  handlers[kind] = original;
   rollbar[KINDS[kind].handler] = function (...args) {
     if (kind === 'uncaught') {
       const [, url, , , error] = args;
@@ -96,12 +97,12 @@ function gate(rollbar, record, kind) {
       }
       if (error?._isAnonymous) {
         // Only this instance received it, so hand it to the reporter.
-        const chosen = reporter(record.latest, kind);
+        const chosen = reporter(rollbar, kind);
         const target = chosen ? chosen.rollbar : rollbar;
-        return managed.get(target).handlers[kind].apply(target, args);
+        return managed.get(target)[kind].apply(target, args);
       }
     }
-    const chosen = reporter(record.latest, kind);
+    const chosen = reporter(rollbar, kind);
     if (chosen && chosen.rollbar !== rollbar) {
       return undefined;
     }
@@ -115,18 +116,16 @@ export function manageGlobalCapture(rollbar) {
   if (typeof window === 'undefined' || !rollbar) {
     return null;
   }
-  let record = managed.get(rollbar);
-  if (!record) {
-    record = { handlers: {}, latest: null };
+  if (!managed.has(rollbar)) {
+    const handlers = {};
     Object.keys(KINDS).forEach((kind) => {
       if (typeof rollbar[KINDS[kind].handler] === 'function') {
-        gate(rollbar, record, kind);
+        gate(rollbar, handlers, kind);
       }
     });
-    managed.set(rollbar, record);
+    managed.set(rollbar, handlers);
   }
   const claim = { rollbar, seq: created++, mounted: false, hasMounted: false };
-  record.latest = claim;
   if (capturesAny(claim)) {
     register(claim);
   }
@@ -147,13 +146,17 @@ export function unmountGlobalCapture(claim) {
     return;
   }
   claim.mounted = false;
-  // Other unmounted claims for the same instance (a shared one, say) would
-  // decide nothing this one doesn't.
+  // Of an instance's unmounted claims (a shared one has several), only the
+  // newest that has mounted can be chosen, so keep just that one, or none if
+  // the instance captures nothing.
+  const unmounted = claims
+    .filter((other) => other.rollbar === claim.rollbar && !other.mounted)
+    .concat(claim);
+  const newest = unmounted
+    .filter((other) => other.hasMounted)
+    .reduce((a, b) => (b.seq > a.seq ? b : a));
   claims = claims.filter(
     (other) =>
-      other === claim || other.mounted || other.rollbar !== claim.rollbar,
+      !unmounted.includes(other) || (other === newest && capturesAny(other)),
   );
-  if (!capturesAny(claim)) {
-    claims = claims.filter((other) => other !== claim);
-  }
 }

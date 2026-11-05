@@ -163,6 +163,72 @@ describe('global capture coordination', () => {
     expect(shared.reports).toHaveLength(3);
   });
 
+  it.each([
+    ['newest first', ['second', 'first', 'own']],
+    ['oldest first', ['first', 'second', 'own']],
+  ])(
+    'reports once with a shared and a separate instance, unmounting the shared one %s',
+    (_, order) => {
+      const capture = load();
+      const shared = instance();
+      const providers = {
+        first: provider(capture, undefined, shared),
+        own: provider(capture),
+        second: provider(capture, undefined, shared),
+      };
+      const { first, own, second } = providers;
+
+      first.mount();
+      own.mount();
+      second.mount();
+      order.forEach((name) => providers[name].unmount());
+      throwUncaught(first, own, second);
+
+      // The second Provider was created last, so its instance reports.
+      expect([shared.reports.length, own.rollbar.reports.length]).toEqual([
+        1, 0,
+      ]);
+    },
+  );
+
+  it("doesn't let StrictMode's extra construction stand for a shared instance", () => {
+    const capture = load();
+    const shared = instance();
+    const first = provider(capture, undefined, shared);
+    const own = provider(capture);
+    const second = provider(capture, undefined, shared);
+    // StrictMode constructs a third Provider for the shared instance twice;
+    // this one never mounts.
+    provider(capture, undefined, shared);
+
+    first.mount();
+    own.mount();
+    second.mount();
+    second.unmount();
+    first.unmount();
+    own.unmount();
+    throwUncaught(first, own, second);
+
+    expect([shared.reports.length, own.rollbar.reports.length]).toEqual([1, 0]);
+  });
+
+  it('reports once when an instance turns capture back on after its Providers unmounted', () => {
+    const capture = load();
+    const first = provider(capture);
+    const second = provider(capture);
+
+    first.mount();
+    second.mount();
+    // The app keeps the second instance and switches capture off, then on.
+    second.rollbar.configure({ captureUncaught: false });
+    second.unmount();
+    first.unmount();
+    second.rollbar.configure({ captureUncaught: true });
+    throwUncaught(first, second);
+
+    expect(reported(first, second)).toEqual([1, 0]);
+  });
+
   it('reports to every project', () => {
     const capture = load();
     const a = provider(capture, { accessToken: 'A' });
