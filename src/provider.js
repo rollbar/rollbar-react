@@ -74,18 +74,34 @@ export class Provider extends Component {
 
   // componentDidUpdate()
 
+  // React compares context values by identity, so a new object on every
+  // render would re-render every consumer, even memoized ones. Reuse the
+  // previous value until one of its fields actually changes. Caching here is
+  // safe even if React discards a render: the value depends only on these
+  // three fields.
+  getContextValue(rollbar, options, ctor) {
+    const prev = this.contextValue;
+    if (
+      !prev ||
+      prev[RollbarInstance] !== rollbar ||
+      prev[BaseOptions] !== options ||
+      prev[RollbarCtor] !== ctor
+    ) {
+      this.contextValue = {
+        [RollbarInstance]: rollbar,
+        [BaseOptions]: options,
+        [RollbarCtor]: ctor,
+      };
+    }
+    return this.contextValue;
+  }
+
   render() {
     const { children, Rollbar: ctor = Rollbar } = this.props;
     const { rollbar, options } = this.state;
 
     return (
-      <Context.Provider
-        value={{
-          [RollbarInstance]: rollbar,
-          [BaseOptions]: options,
-          [RollbarCtor]: ctor,
-        }}
-      >
+      <Context.Provider value={this.getContextValue(rollbar, options, ctor)}>
         {children}
       </Context.Provider>
     );
