@@ -148,5 +148,31 @@ describe('Provider', () => {
 
       expect(memoRenders).toBe(1);
     });
+
+    it('should provide a new context value when the Rollbar prop changes', () => {
+      class CustomRollbar extends Rollbar {}
+      const rollbars = new Set<Rollbar>();
+      const contextValues = new Set<ContextInterface>();
+
+      const Consumer = () => {
+        rollbars.add(useRollbar());
+        contextValues.add(useContext(Context));
+        return null;
+      };
+
+      const { rerender } = render(
+        <Provider config={config}>
+          <Consumer />
+        </Provider>,
+      );
+      rerender(
+        <Provider config={config} Rollbar={CustomRollbar}>
+          <Consumer />
+        </Provider>,
+      );
+
+      expect(contextValues.size).toBe(2);
+      expect(rollbars.size).toBe(1);
+    });
   });
 });
